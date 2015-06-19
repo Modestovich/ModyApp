@@ -1,0 +1,28 @@
+<resources>
+
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
+
+    <style name="ProgressBarStyling" parent="Widget.AppCompat.ProgressBar.Horizontal">
+        <item name="android:minHeight">50dip</item>
+        <item name="android:maxHeight">150dip</item>
+        <item name="android:minWidth">300dip</item>
+        <item name="android:progress">0</item>
+        <item name="android:max">100</item>
+        <item name="android:progressDrawable" >@drawable/progress_bar_style</item>
+    </style>
+    <style name="TextInProgress" parent="Widget.AppCompat.Light.AutoCompleteTextView">
+        <!--<item name="android:layout_alignTop">@+id/startUpBar</item>-->
+        <!--<item name="android:baselineAligned">@+id/startUpBar</item>-->
+        <!--<item name="android:layout_alignBottom">@+id/startUpBar</item>-->
+        <item name="android:layout_centerInParent">true</item>
+        <item name="android:text">@string/progressStartUp</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">@dimen/progressTextSize</item>
+
+    </style>
+
+</resources>
