@@ -10,7 +10,6 @@
             android:layout_height="wrap_content"
             android:padding="10dip"
             android:text="@string/BackButton"
-            android:onClick="backHistory"
             />
 
     <RelativeLayout
@@ -38,4 +37,40 @@
                 />
 
     </RelativeLayout>
+    <TextView
+            android:id="@+id/player_song_number"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@+id/player_song_title"
+            />
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_below="@+id/player_song_number"
+            >
+        <TextView
+                android:id="@+id/player_progress"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="4"
+                android:paddingRight="12dip"
+                android:paddingLeft="12dip"
+                />
+        <SeekBar
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/player_song_progressBar"
+                android:layout_weight="1"
+                />
+        <TextView
+                android:id="@+id/player_to_finish"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="4"
+                android:paddingRight="12dip"
+                android:paddingLeft="12dip"
+                />
+    </LinearLayout>
 </RelativeLayout>

@@ -1,21 +1,15 @@
 package com.example.modyapp.app.Fragments;
 
-import android.app.Activity;
-import android.app.ActivityOptions;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.app.Fragment;
-import android.speech.tts.TextToSpeech;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.SeekBar;
 import android.widget.TextView;
-import com.example.modyapp.app.LoginActivity;
 import com.example.modyapp.app.MusicPlayer;
 import com.example.modyapp.app.R;
 
@@ -26,6 +20,24 @@ public class PlayerHeader extends Fragment {
         @Override
         public void onClick(View v) {
             getActivity().onBackPressed();
+        }
+    };
+    private SeekBar.OnSeekBarChangeListener seekChange = new SeekBar.OnSeekBarChangeListener() {
+        private Integer progress = 0;
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            this.progress = progress;
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+            MusicPlayer.MouseMove();
+        }
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
+            MusicPlayer.MouseUp(progress*1000);
+            seekBar.setProgress(progress);
         }
     };
 
@@ -44,6 +56,21 @@ public class PlayerHeader extends Fragment {
                 .setText(MusicPlayer.getCurrentSong().artist);
         ((TextView) view.findViewById(R.id.player_title))
                 .setText(MusicPlayer.getCurrentSong().title);
+        ((TextView) view.findViewById(R.id.player_song_number))
+                .setText((MusicPlayer.getCurrentPosition()+1)+" of "
+                        + MusicPlayer.getListLength());
+        ((TextView) view.findViewById(R.id.player_progress))
+                .setText("0:00");
+        ((TextView) view.findViewById(R.id.player_to_finish))
+                .setText(String.valueOf(MusicPlayer.getCurrentSongDuration()));
         return view;
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ((SeekBar) view.
+                findViewById(R.id.player_song_progressBar)).
+                setOnSeekBarChangeListener(seekChange);
     }
 }

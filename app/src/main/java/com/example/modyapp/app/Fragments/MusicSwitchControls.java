@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.SeekBar;
 import com.example.modyapp.app.MusicPlayer;
 import com.example.modyapp.app.R;
 
@@ -41,14 +42,13 @@ public class MusicSwitchControls extends Fragment {
     private View.OnClickListener startPauseTrack = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if(MusicPlayer.isPlaying())
-                if(isPlaying){
-                    MusicPlayer.Pause();
-                    setTextAndPlay(getActivity().getString(R.string.player_play),false);
-                }else {
-                    MusicPlayer.Continue();
-                    setTextAndPlay(getActivity().getString(R.string.player_pause),true);
-                }
+            if(isPlaying){
+                MusicPlayer.Pause();
+                setTextAndPlay(getActivity().getString(R.string.player_play),false);
+            }else {
+                MusicPlayer.Continue();
+                setTextAndPlay(getActivity().getString(R.string.player_pause),true);
+            }
         }
     };
 

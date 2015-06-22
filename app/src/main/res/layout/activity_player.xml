@@ -1,5 +1,6 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:tools="http://schemas.android.com/tools"
+                android:id="@+id/player_main"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 tools:context="com.example.modyapp.app.PlayerActivity">
@@ -7,21 +8,10 @@
             android:name="com.example.modyapp.app.Fragments.PlayerHeader"
             android:id="@+id/headerFragment"
             android:layout_width="match_parent"
-            android:layout_height="50dip"
+            android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             tools:layout="@layout/fragment_player_header"
             />
-
-    <fragment
-            android:name="com.example.modyapp.app.Fragments.HeaderControls"
-            android:id="@+id/headerControlsFragment"
-            android:layout_width="match_parent"
-            android:layout_height="50dip"
-            tools:layout="@layout/fragment_player_header_controls"
-            android:layout_below="@+id/headerFragment"
-            />
-
-
 
     <fragment
             android:name="com.example.modyapp.app.Fragments.MusicSwitchControls"

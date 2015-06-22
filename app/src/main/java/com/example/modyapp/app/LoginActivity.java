@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
+import com.example.modyapp.app.Song.DownloadMusic;
 import com.example.modyapp.app.Song.Song;
 import com.vk.sdk.*;
 import com.vk.sdk.api.*;
@@ -41,11 +42,12 @@ public class LoginActivity extends ActionBarActivity {
                     ActivityOptions.makeCustomAnimation(getApplicationContext(),
                             R.anim.main_activity, R.anim.secondary_activity)
                             .toBundle();
-            if(PlayerActivity.getCreation()){
+            /*if(PlayerActivity.getCreation()){
                 PlayerActivity.Create();
             }else {
-                playerActivity.setFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);
-            }
+                playerActivity.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                //playerActivity.setFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);
+            }*/
             startActivity(playerActivity, bndlanimation);
             //downloadSong(clickedSong);
         }

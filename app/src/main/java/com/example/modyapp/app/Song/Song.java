@@ -24,9 +24,7 @@ public class Song {
     }
 
     public String getDuration(){
-        String duration = this.song.duration/60 + ":";
-        duration += (this.song.duration%60>10) ? this.song.duration%60 : "0"+this.song.duration%60;
-        return duration;
+        return transformDuration(this.song.duration);
     }
     private String getExtension(){
         String url = song.url;
@@ -37,7 +35,12 @@ public class Song {
         return song.artist+"-"+song.title+this.getExtension();
     }
 
-    @Nullable
+    public static String transformDuration(Integer d){
+        String duration = d/60 + ":";
+        duration += (d%60>=10) ? d%60 : "0"+d%60;
+        return duration;
+    }
+
     @Override
     public boolean equals(Object song) {
         return (this.getSong().getId()==((Song)song).getSong().getId());

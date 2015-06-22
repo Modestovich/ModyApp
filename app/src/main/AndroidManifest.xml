@@ -22,15 +22,17 @@
             android:label="@string/title_activity_login">
         </activity>
         <activity android:name="com.vk.sdk.VKOpenAuthActivity" />
-<!--        <activity
+        <activity
             android:name=".PlayerActivity"
             android:launchMode="singleInstance"
             android:label="@string/title_activity_player" >
-        </activity>-->
+        </activity>
+<!--
         <activity
                 android:name=".PlayerActivity"
                 android:label="@string/title_activity_player" >
         </activity>
+-->
 
     </application>
 
