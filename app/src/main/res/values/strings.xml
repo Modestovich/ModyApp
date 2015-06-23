@@ -22,4 +22,11 @@
 
 <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="player_next_random">Random</string>
+    <string name="player_next_simple">Simple</string>
+    <string name="player_repeat_single">Repeat single</string>
+    <string name="player_repeat_all">Repeat all</string>
+    <string name="player_repeat_no_repeat">Don\'t repeat</string>
+    <string name="player_lyrics_hide">Hide lyrics</string>
+    <string name="player_lyrics_show">Show lyrics</string>
 </resources>

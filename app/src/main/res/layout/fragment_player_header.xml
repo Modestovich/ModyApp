@@ -49,6 +49,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_below="@+id/player_song_number"
+            android:id="@+id/player_seeker_keeper"
             >
         <TextView
                 android:id="@+id/player_progress"
@@ -72,5 +73,31 @@
                 android:paddingRight="12dip"
                 android:paddingLeft="12dip"
                 />
+    </LinearLayout>
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_below="@+id/player_seeker_keeper">
+        <Button
+                android:id="@+id/player_random"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/PlayerHeaderControlsButtons"
+                android:text="@string/player_next_random"
+                />
+        <Button
+                android:id="@+id/player_repeat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/PlayerHeaderControlsButtons"
+                android:text="@string/player_repeat_all"
+                />
+        <Button
+                android:id="@+id/player_lyricsControl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/PlayerHeaderControlsButtons"
+                android:text="@string/player_lyrics_show"/>
     </LinearLayout>
 </RelativeLayout>
