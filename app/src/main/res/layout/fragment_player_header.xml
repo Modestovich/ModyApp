@@ -84,14 +84,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 style="@style/PlayerHeaderControlsButtons"
-                android:text="@string/player_next_random"
+                android:text="@string/player_next_simple"
                 />
         <Button
                 android:id="@+id/player_repeat"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 style="@style/PlayerHeaderControlsButtons"
-                android:text="@string/player_repeat_all"
+                android:text="@string/player_repeat_no_repeat"
                 />
         <Button
                 android:id="@+id/player_lyricsControl"

@@ -18,18 +18,18 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".LoginActivity"
+            android:name=".ListActivity"
             android:label="@string/title_activity_login">
         </activity>
         <activity android:name="com.vk.sdk.VKOpenAuthActivity" />
         <activity
             android:name=".PlayerActivity"
-            android:launchMode="singleInstance"
             android:label="@string/title_activity_player" >
         </activity>
 <!--
         <activity
                 android:name=".PlayerActivity"
+                android:launchMode="singleInstance"
                 android:label="@string/title_activity_player" >
         </activity>
 -->

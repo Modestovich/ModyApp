@@ -10,7 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import com.example.modyapp.app.LoginActivity;
+import com.example.modyapp.app.ListActivity;
 import com.example.modyapp.app.R;
 
 public class StartUpProgress extends Fragment {
@@ -70,7 +70,7 @@ public class StartUpProgress extends Fragment {
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            Intent slideactivity = new Intent( getActivity(), LoginActivity.class);
+            Intent slideactivity = new Intent( getActivity(), ListActivity.class);
             Bundle bndlanimation =
                     ActivityOptions.makeCustomAnimation(getActivity(),
                             R.anim.main_activity,R.anim.secondary_activity)

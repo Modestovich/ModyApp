@@ -1,14 +1,17 @@
 package com.example.modyapp.app;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import com.example.modyapp.app.Song.Song;
+import com.vk.sdk.api.*;
 import com.vk.sdk.api.model.VKApiAudio;
 
 
@@ -16,6 +19,7 @@ public class PlayerActivity extends Activity {
 
     private SeekBar barSeeking;
     private TextView textSeeking;
+    private TextView lyricsText;
     private UpdateTimeBar updateScreen;
     private View.OnTouchListener mouseEvent = new View.OnTouchListener() {
         @Override
@@ -49,8 +53,8 @@ public class PlayerActivity extends Activity {
                 .setMax(song.duration);
     }
 
-
     private void UpdateTime(){
+        lyricsText = (TextView) findViewById(R.id.player_lyrics);
         barSeeking = (SeekBar) findViewById(R.id.player_song_progressBar);
         textSeeking = (TextView) findViewById(R.id.player_progress);
         updateScreen = new UpdateTimeBar();
@@ -98,7 +102,6 @@ public class PlayerActivity extends Activity {
                 if(isCancelled())
                     break;
             }
-
             return null;
         }
 

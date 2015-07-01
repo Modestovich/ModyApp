@@ -1,6 +1,7 @@
 package com.example.modyapp.app;
 
 import android.media.MediaPlayer;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 import android.widget.SeekBar;
@@ -10,12 +11,57 @@ import com.example.modyapp.app.Song.Song;
 import com.vk.sdk.api.model.VKApiAudio;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * Created by Mody on 03.06.2015.
  */
 public final class MusicPlayer {
+
+    public enum Repeat{
+        REPEAT_NOREPEAT(0), REPEAT_ALL(1) ,REPEAT_SINGLE(2);
+        private Integer value;
+        private static Integer currentValue = 0;
+        private static Map<Integer, Repeat> map = new HashMap<Integer, Repeat>();
+
+        static {
+            for (Repeat repeat : Repeat.values()) {
+                map.put(repeat.value, repeat);
+            }
+        }
+        Repeat(final int value) { this.value = value; }
+
+        public static void setNextRepeat(){
+            if(currentValue==0 || currentValue==1) currentValue++;
+            else currentValue = 0;
+        }
+        public static void setRepeat(Integer flag){
+            currentValue = flag;
+        }
+
+        public static Integer getIntValue(){
+            return currentValue;
+        }
+        public static Repeat getValue(Integer repeatInt){
+            switch (repeatInt) {
+                case 1:
+                    return REPEAT_ALL;
+                case 2:
+                    return REPEAT_SINGLE;
+                default:return REPEAT_NOREPEAT;
+            }
+        }
+        public static Repeat getValue(){
+            switch (currentValue) {
+                case 1:
+                    return REPEAT_ALL;
+                case 2:
+                    return REPEAT_SINGLE;
+                default:return REPEAT_NOREPEAT;
+            }
+        }
+    }
+
 
     private static MediaPlayer player = null;
     private static ArrayList<Song> songs;
@@ -24,7 +70,11 @@ public final class MusicPlayer {
     private static Integer currentPosition;//position of current song in list
     private static boolean isPlaying;
     private static boolean stopSeeking;
-    private static boolean seekTo;
+    private static boolean randomFlag = false;
+    private static ArrayList<Integer> sequence = new ArrayList<Integer>();
+    private static Integer positionInList=0;
+
+    private static Random random = new Random();
 
     private static MediaPlayer.OnPreparedListener preparedListener = new MediaPlayer.OnPreparedListener() {
         @Override
@@ -32,7 +82,6 @@ public final class MusicPlayer {
             mp.start();
             isPlaying = true;
             stopSeeking = false;
-            seekTo = false;
         }
     };
     private static MediaPlayer.OnCompletionListener completionListener = new MediaPlayer.OnCompletionListener() {
@@ -49,9 +98,6 @@ public final class MusicPlayer {
 
     public static void Start(Song song, Integer position){
         if(currentSong==null || !song.equals(currentSong)){
-            Log.i("New song",song.getName());
-            if(currentSong!=null)Log.i("Current song",currentSong.getName());
-
             if (player != null) {
                 player.release();
                 player = null;
@@ -86,25 +132,75 @@ public final class MusicPlayer {
         isPlaying = true;
     }
     public static void Prev() {
-        if(currentPosition>0) {
+        if(Repeat.getValue()==Repeat.REPEAT_SINGLE) {
+            length = 0;
+            player.seekTo(length);
+            Start(songs.get(currentPosition), currentPosition);
+            return;
+        }
+        if(randomFlag){
+            try{
+                if(positionInList!=0){
+                    currentPosition = sequence.get(--positionInList);
+                }
+                Start(songs.get(currentPosition), currentPosition);
+                isPlaying = true;
+            }catch(ConcurrentModificationException ex){
+                Log.i("ConcurrentEx","Switch while processing current");
+            }
+        }
+        else if(currentPosition>0) {
             currentPosition--;
             Start(songs.get(currentPosition), currentPosition);
             isPlaying = true;
         }
     }
     public static void Next() {
-        if(currentPosition<songs.size()-1) {
+
+        if(Repeat.getValue()==Repeat.REPEAT_SINGLE) {
+            length = 0;
+            player.seekTo(length);
+            player.start();
+            return;
+        }
+        if(randomFlag){
+            Log.i("NextPosInList","PositionInlist="+positionInList);
+            Log.i("NextSeqSize","SeqSize="+sequence.size());
+            try {
+                if(positionInList==sequence.size()-1){
+                    currentPosition = getRandom();
+                    sequence.add(currentPosition);
+                    positionInList++;
+                }
+                else {
+                    currentPosition = sequence.get(++positionInList);
+                }
+                isPlaying = true;
+                Start(songs.get(currentPosition), currentPosition);
+            }catch(ConcurrentModificationException ex){
+                Log.i("ConcurrentEx","Switch while processing current");
+            }
+        }else if(currentPosition<songs.size()-1) {
             currentPosition++;
             Start(songs.get(currentPosition), currentPosition);
             isPlaying = true;
         }
+    }
+    private static Integer getRandom(){
+        Integer next = random.nextInt(songs.size());
+        if(Repeat.getValue()==Repeat.REPEAT_NOREPEAT) {
+            while(sequence.contains(next)){
+                next = random.nextInt(songs.size());
+            }
+        }
+        return next;
     }
 
     public static void populateMusicPlayer(ArrayList<Song> songs){
         MusicPlayer.songs = songs;
     }
     public static VKApiAudio getCurrentSong(){
-        return currentSong.getSong();
+        return currentSong==null? null : currentSong.getSong();
     }
     public static Integer getCurrentPosition(){
         return currentPosition;
@@ -125,7 +221,7 @@ public final class MusicPlayer {
         try {
             return player.getCurrentPosition();
         }catch(NullPointerException ex){
-            Log.i("Seek is null",ex.getMessage());
+            Log.i("Seek is null",ex.getMessage()+"!");
         }
         return 0;
     }
@@ -133,7 +229,15 @@ public final class MusicPlayer {
         currentSong = null;
         length = 0;
     }
+    public static void clearSequence(Song song, Integer position){
+        clearCondition();
+        sequence.clear();
+        positionInList = 0;
+        Start(song,position);
+        isPlaying = true;
+    }
 
+    //seeking position of song
     public static void MouseMove(){
         stopSeeking = true;
     }
@@ -142,7 +246,6 @@ public final class MusicPlayer {
         player.seekTo(progress);
         length = progress;
     }
-
     public static void MouseUp(){
         stopSeeking = true;
     }
@@ -150,4 +253,37 @@ public final class MusicPlayer {
     public static boolean isStopSeeking(){
         return stopSeeking;
     }
+
+    //setting/getting repeat
+    public static void setRepeat(){
+        Repeat.setNextRepeat();
+    }
+    public static void setRepeat(Integer repeat) { Repeat.setRepeat(repeat); }
+    public static Repeat getRepeat(){
+        return Repeat.getValue();
+    }
+    public static Integer getIntRepeat(){
+        return Repeat.getIntValue();
+    }
+    //setting random
+    public static boolean getRandomState(){
+        return randomFlag;
+    }
+    public static boolean setRandom(){
+        if(randomFlag){
+            randomFlag = false;
+            sequence.clear();
+        }else {
+            randomFlag = true;
+            positionInList = 0;
+            if(currentSong!=null)
+                sequence.add(currentPosition);
+        }
+        return randomFlag;
+    }
+    public static void setRandom(boolean flag){
+        randomFlag = flag;
+        if(flag && sequence.size()==0) sequence.add(currentPosition);
+    }
+
 }

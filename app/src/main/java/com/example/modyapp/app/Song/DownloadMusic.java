@@ -55,12 +55,10 @@ public class DownloadMusic extends AsyncTask<Song,Integer,String> {
             URL url = new URL(songs[0].getSong().url);
             connection = (HttpURLConnection) url.openConnection();
             connection.connect();
-
             if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                 return "Server returned HTTP " + connection.getResponseCode()
                         + " " + connection.getResponseMessage();
             }
-
             int fileLength = connection.getContentLength();
             fullFileNameWithPath = Environment.
                     getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).
