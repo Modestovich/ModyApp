@@ -4,15 +4,40 @@
                 android:layout_height="match_parent"
                 tools:context="com.example.modyapp.app.ListActivity">
 
-    <ListView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/songList"
-            android:scrollbarFadeDuration="1000"
-            android:scrollbarDefaultDelayBeforeFade="2000"
-            android:dividerHeight="3sp"
-            android:background="@drawable/bg_item"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentStart="true"
-            />
+        <!--<EditText
+                android:id="@+id/searchEdit"
+                android:inputType="text"
+                android:hint="@string/search_hint"
+                android:textColorHint="@color/dark_gray"
+                android:layout_width="match_parent"
+                android:layout_height="50dip"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true"
+                android:padding="10dip"
+                />-->
+        <SearchView
+                android:id="@+id/searchMusic"
+                android:queryHint="@string/search_hint"
+                android:background="@color/vk_white"
+                android:textColorHint="@color/dark_gray"
+                android:layout_width="match_parent"
+                android:iconifiedByDefault="false"
+
+                android:focusable="false"
+                android:focusableInTouchMode="true"
+
+                android:layout_height="50dip"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true"
+                />
+        <ListView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/songList"
+                android:layout_below="@id/searchMusic"
+                android:scrollbarFadeDuration="1000"
+                android:scrollbarDefaultDelayBeforeFade="2000"
+                android:textFilterEnabled="true"
+                android:background="@drawable/bg_item"
+                />
 </RelativeLayout>

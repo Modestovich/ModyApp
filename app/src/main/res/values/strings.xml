@@ -6,8 +6,8 @@
     <string name="progressStartUp">0%</string>
     <string name="modyStartUp">MODY</string>
 
-<!-- Login Page -->
-    <string name="title_activity_login">LoginActivity</string>
+<!-- List Page -->
+    <string name="title_activity_list">ListActivity</string>
     <string name="Login">Login</string>
     <string name="type_your_login">Type your login</string>
     <string name="enter">Enter</string>
@@ -29,4 +29,5 @@
     <string name="player_lyrics_hide">Hide lyrics</string>
     <string name="player_lyrics_show">Show lyrics</string>
     <string name="playing_song">Currently playing song</string>
+    <string name="search_hint">Search</string>
 </resources>

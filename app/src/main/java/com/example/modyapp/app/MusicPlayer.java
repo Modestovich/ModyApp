@@ -132,13 +132,14 @@ public final class MusicPlayer {
         isPlaying = true;
     }
     public static void Prev() {
-        if(Repeat.getValue()==Repeat.REPEAT_SINGLE) {
+        if(Repeat.getValue()==Repeat.REPEAT_SINGLE ||
+                (songs.size()==1 && getRepeat()!=Repeat.REPEAT_NOREPEAT )) {
             length = 0;
             player.seekTo(length);
             Start(songs.get(currentPosition), currentPosition);
             return;
         }
-        if(randomFlag){
+        if(randomFlag && songs.size()>1){
             try{
                 if(positionInList!=0){
                     currentPosition = sequence.get(--positionInList);
@@ -156,18 +157,16 @@ public final class MusicPlayer {
         }
     }
     public static void Next() {
-
-        if(Repeat.getValue()==Repeat.REPEAT_SINGLE) {
+        if(Repeat.getValue()==Repeat.REPEAT_SINGLE ||
+                (songs.size()==1 && getRepeat()!=Repeat.REPEAT_NOREPEAT )) {
             length = 0;
             player.seekTo(length);
             player.start();
             return;
         }
-        if(randomFlag){
-            Log.i("NextPosInList","PositionInlist="+positionInList);
-            Log.i("NextSeqSize","SeqSize="+sequence.size());
+        if(randomFlag && songs.size()>1){
             try {
-                if(positionInList==sequence.size()-1){
+                if(positionInList==sequence.size()-1 || sequence.size()==0){
                     currentPosition = getRandom();
                     sequence.add(currentPosition);
                     positionInList++;
@@ -233,6 +232,7 @@ public final class MusicPlayer {
         clearCondition();
         sequence.clear();
         positionInList = 0;
+        if(getRandomState()) sequence.add(position);
         Start(song,position);
         isPlaying = true;
     }
@@ -258,13 +258,13 @@ public final class MusicPlayer {
     public static void setRepeat(){
         Repeat.setNextRepeat();
     }
-    public static void setRepeat(Integer repeat) { Repeat.setRepeat(repeat); }
+    /*public static void setRepeat(Integer repeat) { Repeat.setRepeat(repeat); }*/
     public static Repeat getRepeat(){
         return Repeat.getValue();
     }
-    public static Integer getIntRepeat(){
+/*    public static Integer getIntRepeat(){
         return Repeat.getIntValue();
-    }
+    }*/
     //setting random
     public static boolean getRandomState(){
         return randomFlag;
@@ -281,9 +281,9 @@ public final class MusicPlayer {
         }
         return randomFlag;
     }
-    public static void setRandom(boolean flag){
+  /*  public static void setRandom(boolean flag){
         randomFlag = flag;
         if(flag && sequence.size()==0) sequence.add(currentPosition);
-    }
+    }*/
 
 }

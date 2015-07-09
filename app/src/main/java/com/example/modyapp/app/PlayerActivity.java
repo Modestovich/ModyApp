@@ -11,7 +11,7 @@ import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import com.example.modyapp.app.Song.Song;
-import com.vk.sdk.api.*;
+import com.example.modyapp.app.VKActions.VKActions;
 import com.vk.sdk.api.model.VKApiAudio;
 
 
@@ -19,8 +19,9 @@ public class PlayerActivity extends Activity {
 
     private SeekBar barSeeking;
     private TextView textSeeking;
-    private TextView lyricsText;
     private UpdateTimeBar updateScreen;
+    private TextView lyricsView;
+    private Button lyricsButton;
     private View.OnTouchListener mouseEvent = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View v, MotionEvent event) {
@@ -51,12 +52,14 @@ public class PlayerActivity extends Activity {
                 .setText(Song.transformDuration(song.duration));
         ((SeekBar) findViewById(R.id.player_song_progressBar))
                 .setMax(song.duration);
+        findViewById(R.id.player_backgroundKeeper).setBackground(null);
     }
 
     private void UpdateTime(){
-        lyricsText = (TextView) findViewById(R.id.player_lyrics);
         barSeeking = (SeekBar) findViewById(R.id.player_song_progressBar);
         textSeeking = (TextView) findViewById(R.id.player_progress);
+        lyricsView = (TextView) findViewById(R.id.player_lyrics);
+        lyricsButton = (Button) findViewById(R.id.player_lyricsControl);
         updateScreen = new UpdateTimeBar();
         updateScreen.execute();
     }
@@ -65,12 +68,14 @@ public class PlayerActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
         updateScreen.cancel(true);
-        if(!MusicPlayer.isPlaying())
-            MusicPlayer.clearCondition();
+        /*if(!MusicPlayer.isPlaying())
+            MusicPlayer.clearCondition();*/
     }
 
     private class UpdateTimeBar extends AsyncTask<Void, Integer, Void> {
         private Integer songId;
+        private boolean onceQ = true;
+        private boolean isVisible = false;
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
@@ -84,23 +89,31 @@ public class PlayerActivity extends Activity {
             songId = MusicPlayer.getCurrentSong().id;
             while(true){
                //if(max>barSeeking.getProgress()){
-               if(songId==MusicPlayer.getCurrentSong().id){
-                   try {
-                       Thread.sleep(1000);
-                   } catch (Exception ex) {
-                       ex.printStackTrace();
-                   }
-                   try{
-                       if(!MusicPlayer.isStopSeeking())
-                           publishProgress(MusicPlayer.getSeeking());
-                   }catch(IllegalStateException ex){
-                       Log.i("Ill state", "Ill state");
-                   }
-               }else{
-                   publishProgress();
-               }
-                if(isCancelled())
-                    break;
+                if(MusicPlayer.getCurrentSong()!=null) {
+                    if (songId == MusicPlayer.getCurrentSong().id) {
+                        if(onceQ){
+                            publishProgress(MusicPlayer.getSeeking());
+                            VKActions.getBackground(Song.transformNameForBgSearch(MusicPlayer.getCurrentSong()),PlayerActivity.this);
+                        }
+                        try {
+                            Thread.sleep(1000);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                        try {
+                            if (!MusicPlayer.isStopSeeking())
+                                publishProgress(MusicPlayer.getSeeking());
+                        } catch (IllegalStateException ex) {
+                            Log.i("Ill state", "Ill state");
+                        }
+                    } else {
+                        publishProgress();
+                    }
+                    if (isCancelled())
+                        break;
+                }else{
+                    songId = -1;
+                }
             }
             return null;
         }
@@ -108,12 +121,30 @@ public class PlayerActivity extends Activity {
         @Override
         protected void onProgressUpdate(Integer... values) {
             super.onProgressUpdate(values);
-            if(values.length>0) {
+            if(values.length>0 && !onceQ) {
                 barSeeking.setProgress(values[0] / 1000);
                 textSeeking.setText(Song.transformDuration(values[0] / 1000));
-            }else {
+            }else if(values.length>0 && onceQ){//update state and value of lyrics
+                VKApiAudio song = MusicPlayer.getCurrentSong();
+                if(song.lyrics_id!=0){
+                    VKActions.getLyrics(song.lyrics_id,PlayerActivity.this);
+                    lyricsButton.setEnabled(true);
+                    if(isVisible)
+                        lyricsView.setVisibility(View.VISIBLE);
+
+                }else {
+                    lyricsView.setVisibility(View.INVISIBLE);
+                    lyricsButton.setEnabled(false);
+                }
+                onceQ = false;
+            }
+            else {
+                if(lyricsButton.isEnabled()){
+                    isVisible = (lyricsView.getVisibility()==View.VISIBLE);
+                }
                 songId = MusicPlayer.getCurrentSong().id;
                 UpdateState();
+                onceQ = true;
             }
         }
 

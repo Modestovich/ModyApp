@@ -6,17 +6,18 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.*;
 import com.example.modyapp.app.Song.DownloadMusic;
 import com.example.modyapp.app.Song.Song;
+import com.example.modyapp.app.Song.SongAdapter;
 import com.vk.sdk.*;
 import com.vk.sdk.api.*;
 import com.vk.sdk.api.model.VKApiAudio;
 import com.vk.sdk.api.model.VkAudioArray;
-
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Properties;
@@ -27,12 +28,29 @@ public class ListActivity extends ActionBarActivity {
     private final String VK_APP_ID = "4935615";
     private VKAccessToken token;
     private ListView songList;
-    private int previous = -1;
-    private ArrayAdapter<Song> songsAdapter;
+    //private int previous = -1;
+    //private ArrayAdapter<Song> songsAdapter;
+    private SongAdapter songsAdapter;
     private DownloadMusic downloadTask;
     private ProgressDialog mProgressDialog;
-    private boolean newMark = false;
+    private SearchView searchView;
+    private ArrayList<Song> listOfSongs;
+    private ArrayList<Song> filteredSongs;
 
+    private SearchView.OnQueryTextListener searchListener = new SearchView.OnQueryTextListener() {
+
+        @Override
+        public boolean onQueryTextSubmit(String query) {
+            return false;
+        }
+
+        @Override
+        public boolean onQueryTextChange(String newText) {
+            songsAdapter.getFilter().filter(newText);
+            songsAdapter.notifyDataSetChanged();
+            return true;
+        }
+    };
     private AdapterView.OnItemClickListener itemClickListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -92,58 +110,13 @@ public class ListActivity extends ActionBarActivity {
         @Override
         public void onComplete(VKResponse response) {
             VkAudioArray songs = (VkAudioArray) response.parsedModel;
-            final ArrayList<Song> listOfSongs = new ArrayList<Song>();
+            listOfSongs = new ArrayList<Song>();
             for(VKApiAudio song: songs){
                 listOfSongs.add(new Song(song));
             }
-            songsAdapter = new ArrayAdapter<Song>(getApplicationContext(),
-                    R.layout.list_view_music,listOfSongs){
-
-                @Override
-                public View getView(int position, View convertView,
-                                    ViewGroup parent) {
-                    View view = convertView;
-                    if(view==null){
-                        view = getLayoutInflater().inflate(R.layout.list_view_music,
-                                parent,false);
-                    }
-                    Song current_song = listOfSongs.get(position);
-                    ((TextView) view.findViewById(R.id.song_name))
-                            .setText(current_song.getName());
-                    ((TextView) view.findViewById(R.id.artist_name))
-                            .setText(current_song.getSong().artist);
-                    ((TextView) view.findViewById(R.id.song_duration))
-                            .setText(current_song.getDuration());
-                    //if(newMark){
-                        if(position==previous) {
-                            view.findViewById(R.id.player_playing)
-                                    .setVisibility(View.VISIBLE);
-                            newMark = false;
-                      //  }
-                    }else{
-                        (view.findViewById(R.id.player_playing))
-                                .setVisibility(View.INVISIBLE);
-                    }
-
-                    return view;
-                }
-
-                @Override
-                public int getPosition(Song item) {
-                    return super.getPosition(item);
-                }
-
-                @Override
-                public Song getItem(int position) {
-                    return super.getItem(position);
-                }
-
-                public Integer getItemById(Integer id){
-                    return 0;
-                }
-
-
-            };
+            //filteredSongs = listOfSongs;
+            songsAdapter = new SongAdapter(getApplicationContext(),
+                    R.id.songList,listOfSongs);
             songList.setAdapter(songsAdapter);
             MusicPlayer.populateMusicPlayer(listOfSongs);
         }
@@ -164,18 +137,16 @@ public class ListActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list);
-
-        synchronized (getApplicationContext()) {
+        synchronized (getApplicationContext()){
             initializeAndAuthorizeVk();
         }
         InitializeProgress();
-
        /* getFilesListFromDirectory(Environment.
                 getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).toString());*/
-
         synchronized (getApplicationContext()) {
             populateMusicList();
         }
+        //Window window = ListActivity.this.getWindow().getContext().stat
     }
 
     private void deleteFilesFromDirectory(String folderPath){
@@ -228,7 +199,9 @@ public class ListActivity extends ActionBarActivity {
 
     private void populateMusicList() {
         songList = (ListView) findViewById(R.id.songList);
+        searchView = (SearchView) findViewById(R.id.searchMusic);
         songList.setOnItemClickListener(itemClickListener);
+        searchView.setOnQueryTextListener(searchListener);
         VKRequest request = VKApi.audio().get();
         request.executeWithListener(vkListener);
     }
@@ -260,25 +233,25 @@ public class ListActivity extends ActionBarActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        //in case playing song is on current view
         if(MusicPlayer.getCurrentSong()!=null) {
-            if(previous>=0){//if view is drawn and displayed currently
-                try {
-                    (songList.getChildAt(previous-songList.getFirstVisiblePosition())).
-                            findViewById(R.id.player_playing).
-                            setVisibility(View.GONE);
-
-                }catch(NullPointerException ex){
-                    Log.e("ListView Item","This item hasn't been drawn");
+            Integer needle = MusicPlayer.getCurrentSong().id;
+            for (int i = songList.getFirstVisiblePosition();
+                 i < songList.getLastVisiblePosition(); i++) {
+                if(needle==((Song)songList.getAdapter().getItem(i)).getSong().id)
+                    (songList.getChildAt(i).
+                            findViewById(R.id.player_playing)).
+                            setVisibility(View.VISIBLE);
+                else {
+                    try {
+                        (songList.getChildAt(i).
+                                findViewById(R.id.player_playing)).
+                                setVisibility(View.INVISIBLE);
+                    }catch(NullPointerException ex){
+                        Log.i("NPE","View wasn't found");
+                    }
                 }
             }
-            try {//if view is drawn and displayed currently
-                (songList.getChildAt(MusicPlayer.getCurrentPosition()-songList.getFirstVisiblePosition())).
-                        findViewById(R.id.player_playing).
-                        setVisibility(View.VISIBLE);
-            }catch(NullPointerException ex){
-                Log.e("ListView Item","This item hasn't been drawn");
-            }
-            previous = MusicPlayer.getCurrentPosition();
         }
     }
 
@@ -286,6 +259,6 @@ public class ListActivity extends ActionBarActivity {
     protected void onDestroy() {
         super.onDestroy();
         VKUIHelper.onDestroy(this);
-        //player.stop();
+        // stop();
     }
 }

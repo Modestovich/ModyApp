@@ -34,11 +34,21 @@ public class Song {
     public String getFileNameToSave(){
         return song.artist+"-"+song.title+this.getExtension();
     }
+    public String getNameToFilter(){
+        return song.artist+" "+song.title+this.getExtension();
+    }
 
     public static String transformDuration(Integer d){
         String duration = d/60 + ":";
         duration += (d%60>=10) ? d%60 : "0"+d%60;
         return duration;
+    }
+    public static String transformNameForBgSearch(VKApiAudio song){
+        String searchValue = song.artist+" "+song.title;
+        //searchValue = searchValue.replaceAll("([()]+)", "$1 ").trim()
+        searchValue = searchValue.replaceAll("\\(.*?\\)", " ").trim()
+                .replaceAll("\\s+","+");
+        return searchValue;
     }
 
     @Override
