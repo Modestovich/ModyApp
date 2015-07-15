@@ -28,6 +28,10 @@ public class VolumeControls extends Fragment {
         initializeVolume();
     }
 
+    /**
+     * Synchronizing changing of volume in player
+     * with main volume of phone
+     */
     private void initializeVolume() {
         audioManager = (AudioManager) getActivity().
                 getSystemService(Context.AUDIO_SERVICE);
@@ -53,8 +57,6 @@ public class VolumeControls extends Fragment {
             public void onStopTrackingTouch(SeekBar seekBar) {
             }
         });
-
-        //android.media.MediaPlayer.
     }
 
     @Override

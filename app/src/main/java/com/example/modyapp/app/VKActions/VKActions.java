@@ -21,9 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
 
-/**
- * Created by Mody on 7/6/2015.
- */
 public class VKActions {
     private static String lyricsText;
     private static Activity playerActivity;
@@ -47,23 +44,37 @@ public class VKActions {
         }
     };
 
-    public static String  getLyrics(Integer lyrics_id,Activity act) {
+    /**
+     * Get lyrics of current playing song
+     * @param lyrics_id - id of lyrics of current song
+     * @param act - activity where textView should be changed
+     *            after finishing request processing
+     */
+    public static void getLyrics(Integer lyrics_id,Activity act) {
         VKActions.playerActivity = act;
         VKApi.audio().getLyrics(
                 VKParameters.from("lyrics_id", lyrics_id)).
                 executeWithListener(requestLyrics);
-        return lyricsText;
     }
+
+    /**
+     * Set background of player depending on current playing song
+     * If response is empty show standard background
+     * @param searchQuery - search query for get request
+     *                    for source of images for background
+     * @param act - activity to be changed after successful
+     *            receiving response
+     */
     public static void getBackground(String searchQuery,final Activity act){
         VKActions.playerActivity = act;
         String template = "https://itunes.apple.com/search?term=";
         String responseString = "";
-        String requestUrl = template + searchQuery;
+        String requestUrl = template + searchQuery + "&limit=1";
         HttpResponse response = null;
+        long startTime = System.currentTimeMillis();
         try {
             HttpClient client = new DefaultHttpClient();
             HttpGet request = new HttpGet(new URI(requestUrl));
-            //request.setURI(new URI(requestUrl));
             response = client.execute(request);
         } catch (URISyntaxException e) {
             Log.i("URISyntaxException", "ex");
@@ -84,7 +95,6 @@ public class VKActions {
             try {
                 JSONObject responseJSON = new JSONObject(responseString);
                 if((Integer)responseJSON.get("resultCount")!=0){
-                    //at first get needed object -> then get needed parameter
                     String bgURL = (String)((JSONObject)responseJSON.getJSONArray("results").get(0))
                             .get("artworkUrl100");
                     if(bgURL.length()>0)
@@ -96,20 +106,31 @@ public class VKActions {
             }
         }
         setBackground(image);
+        Log.i("Time of response","Total elapsed http request/response time in milliseconds: " +
+                (System.currentTimeMillis() - startTime));
     }
+
+    /**
+     * Get object(DrawableImage) for background if response isn't empty
+     * otherwise return null
+     * @param bgURL - URL of image to be background
+     * @return - object(DrawableImage) for background
+     */
     private static Drawable ImageFromUrl(String bgURL){
         InputStream is;
         try {
             is = (InputStream) new URL(bgURL).getContent();
-            //Drawable image = new BitmapDrawable(is);
             return new BitmapDrawable(is);
         }catch(IOException ex){
             Log.i("IOException","Failed to open stream");
         }
-        Log.i("Return null",":(((");
         return null;
     }
 
+    /**
+     * Setting background for player
+     * @param image - object (DrawableImage) to be background for player
+     */
     private static void setBackground(final Drawable image){
         VKActions.playerActivity.runOnUiThread(new Runnable() {
             @Override

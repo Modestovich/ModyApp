@@ -30,4 +30,5 @@
     <string name="player_lyrics_show">Show lyrics</string>
     <string name="playing_song">Currently playing song</string>
     <string name="search_hint">Search</string>
+    <string name="scrollToTop">Scroll to top</string>
 </resources>

@@ -4,17 +4,15 @@
                 android:layout_height="match_parent"
                 tools:context="com.example.modyapp.app.ListActivity">
 
-        <!--<EditText
-                android:id="@+id/searchEdit"
-                android:inputType="text"
-                android:hint="@string/search_hint"
-                android:textColorHint="@color/dark_gray"
+        <Button
                 android:layout_width="match_parent"
-                android:layout_height="50dip"
+                android:layout_height="0dip"
+                android:id="@+id/scroll_to_top"
+                android:background="#FFFFFF"
+                android:text="@string/scrollToTop"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentStart="true"
-                android:padding="10dip"
-                />-->
+                />
         <SearchView
                 android:id="@+id/searchMusic"
                 android:queryHint="@string/search_hint"
@@ -27,8 +25,7 @@
                 android:focusableInTouchMode="true"
 
                 android:layout_height="50dip"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentStart="true"
+                android:layout_below="@+id/scroll_to_top"
                 />
         <ListView
                 android:layout_width="wrap_content"
@@ -39,5 +36,8 @@
                 android:scrollbarDefaultDelayBeforeFade="2000"
                 android:textFilterEnabled="true"
                 android:background="@drawable/bg_item"
+
+                android:fastScrollEnabled="true"
+                android:overScrollMode="never"
                 />
 </RelativeLayout>

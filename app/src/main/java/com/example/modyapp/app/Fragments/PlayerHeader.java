@@ -2,7 +2,6 @@ package com.example.modyapp.app.Fragments;
 
 import android.app.ActivityOptions;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.text.method.ScrollingMovementMethod;
@@ -13,7 +12,9 @@ import android.view.ViewGroup;
 import android.widget.*;
 import com.example.modyapp.app.ListActivity;
 import com.example.modyapp.app.MusicPlayer;
+import com.example.modyapp.app.Player.Repeat;
 import com.example.modyapp.app.R;
+import com.example.modyapp.app.Song.Song;
 
 public class PlayerHeader extends Fragment {
 
@@ -22,14 +23,10 @@ public class PlayerHeader extends Fragment {
     private Button lyricsButton;
     private LinearLayout subWrapper;
     private LinearLayout backgroundKeeper;
-    private final String STATE = "State";
-    private final int EMPTY_VALUE = -1;
     private TextView lyricsView;
     private View.OnClickListener backClick = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            if(!MusicPlayer.isPlaying())
-                MusicPlayer.clearCondition();
             Intent listActivity = new Intent(
             getActivity().getApplicationContext(), ListActivity.class);
             Bundle bndlanimation =
@@ -52,30 +49,10 @@ public class PlayerHeader extends Fragment {
             subWrapper.setVisibility(View.VISIBLE);
         }
     };
-
-    private SeekBar.OnSeekBarChangeListener seekChange = new SeekBar.OnSeekBarChangeListener() {
-        private Integer progress = 0;
-        @Override
-        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-            this.progress = progress;
-        }
-
-        @Override
-        public void onStartTrackingTouch(SeekBar seekBar) {
-            MusicPlayer.MouseMove();
-        }
-
-        @Override
-        public void onStopTrackingTouch(SeekBar seekBar) {
-            MusicPlayer.MouseUp(progress*1000);
-            seekBar.setProgress(progress);
-        }
-    };
     private View.OnClickListener repeatClick = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            MusicPlayer.setRepeat();
-            setRepeat(MusicPlayer.getRepeat());
+            setNextRepeat();
         }
     };
     private View.OnClickListener randomClick = new View.OnClickListener() {
@@ -89,15 +66,34 @@ public class PlayerHeader extends Fragment {
         public void onClick(View v) {
             Integer lyrId = MusicPlayer.getCurrentSong().lyrics_id;
             if(lyricsView.getVisibility()==View.INVISIBLE) {
-                if(lyricsView.getText().length()==0) {
-                    if (lyrId > 0) {
-                        lyricsView.setVisibility(View.VISIBLE);
-                    }
+                if (lyrId > 0) {
+                    lyricsView.setVisibility(View.VISIBLE);
+                    lyricsButton.setText(R.string.player_lyrics_hide);
                 }
-                else {
-                        lyricsView.setVisibility(View.VISIBLE);
-                    }
-            }else lyricsView.setVisibility(View.INVISIBLE);
+            }else {
+                lyricsButton.setText(R.string.player_lyrics_show);
+                lyricsView.setVisibility(View.INVISIBLE);
+            }
+        }
+    };
+    private SeekBar.OnSeekBarChangeListener seekChange = new SeekBar.OnSeekBarChangeListener() {
+        private Integer progress = 0;
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            ((TextView) getActivity().findViewById(R.id.player_progress))
+                    .setText(Song.transformDuration(progress));
+            this.progress = progress;
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+            MusicPlayer.lockAutoUpdatingSeek();
+        }
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
+            MusicPlayer.updateSeekAfterSliding(progress*1000);
+            seekBar.setProgress(progress);
         }
     };
     @Override
@@ -119,24 +115,17 @@ public class PlayerHeader extends Fragment {
 
         backgroundKeeper = (LinearLayout) view.findViewById(R.id.player_backgroundKeeper);
         backgroundKeeper.setOnClickListener(showControls);
-        /*SharedPreferences settings = getActivity().getSharedPreferences(STATE,0);
-        if(settings.getInt("repeat",EMPTY_VALUE)
-                !=EMPTY_VALUE){
-            //set text and necessary mode
-            setTextAndMode(settings.getBoolean("random",false),
-                    settings.getInt("repeat", EMPTY_VALUE));
-        }*/
         ((TextView) view.findViewById(R.id.player_artist))
             .setText(MusicPlayer.getCurrentSong().artist);
         ((TextView) view.findViewById(R.id.player_title))
             .setText(MusicPlayer.getCurrentSong().title);
         ((TextView) view.findViewById(R.id.player_song_number))
-                .setText((MusicPlayer.getCurrentPosition()+1)+" of "
+                .setText((MusicPlayer.getPositionInList()+1)+" of "
                         + MusicPlayer.getListLength());
         ((TextView) view.findViewById(R.id.player_progress))
                 .setText("0:00");
         ((TextView) view.findViewById(R.id.player_to_finish))
-                .setText(String.valueOf(MusicPlayer.getCurrentSongDuration()));
+                .setText(MusicPlayer.getCurrentSongDuration());
         return view;
     }
 
@@ -148,37 +137,26 @@ public class PlayerHeader extends Fragment {
             setOnSeekBarChangeListener(seekChange);
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        //save state
-        /*SharedPreferences settings = getActivity().getSharedPreferences(STATE,0);
-        SharedPreferences.Editor editor = settings.edit();
-        editor.putBoolean("random", MusicPlayer.getRandomState());
-        editor.putInt ("repeat", MusicPlayer.getIntRepeat());
-        editor.apply();*/
-    }
-
-/*    private void setTextAndMode(boolean random,Integer repeatInt){
-        //setRepeat for MusicPlayer and view
-        setRepeat(MusicPlayer.Repeat.getValue(repeatInt));
-        MusicPlayer.setRepeat(repeatInt);
-        //setRandom for MusicPlayer and view
-        setRandom(random);
-        MusicPlayer.setRandom(random);
-    }*/
-    private void setRepeat(MusicPlayer.Repeat repeat){
-        switch (repeat){
-            case REPEAT_ALL:
-                repeatButton.setText(R.string.player_repeat_all);
-                break;
-            case REPEAT_NOREPEAT:
-                repeatButton.setText(R.string.player_repeat_no_repeat);
-                break;
-            default:
-                repeatButton.setText(R.string.player_repeat_single);
+    /**
+     * Switching text/image to UI to understand
+     * what mode is selected Repeat single/No repeat/Repeat all
+     */
+    private void setNextRepeat(){
+        Repeat.setNextRepeat();
+        if(Repeat.getValue().equals(Repeat.REPEAT_ALL)) {
+            repeatButton.setText(R.string.player_repeat_all);
+        }else if(Repeat.getValue().equals(Repeat.REPEAT_NO_REPEAT)) {
+            repeatButton.setText(R.string.player_repeat_no_repeat);
+        }else{
+            repeatButton.setText(R.string.player_repeat_single);
         }
     }
+
+    /**
+     * Switching text/image to UI to understand
+     * what mode is selected Random/Simple
+     * @param random - parameter of shuffling
+     */
     private void setRandom(boolean random){
         if(random)
             randomButton.setText(R.string.player_next_random);
