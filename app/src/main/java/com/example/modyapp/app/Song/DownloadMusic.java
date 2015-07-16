@@ -14,9 +14,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Properties;
 
-/**
- * Created by Mody on 03.06.2015.
- */
 public class DownloadMusic extends AsyncTask<Song,Integer,String> {
 
     private Context context;
@@ -52,7 +49,7 @@ public class DownloadMusic extends AsyncTask<Song,Integer,String> {
         OutputStream output = null;
         HttpURLConnection connection = null;
         try {
-            URL url = new URL(songs[0].getSong().url);
+            URL url = new URL(songs[0].getURL());
             connection = (HttpURLConnection) url.openConnection();
             connection.connect();
             if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -66,7 +63,7 @@ public class DownloadMusic extends AsyncTask<Song,Integer,String> {
             input = connection.getInputStream();
             output = new FileOutputStream(fullFileNameWithPath);
             //set propetry param
-            prop.setProperty("id",String.valueOf(songs[0].getSong().id));
+            prop.setProperty("id",String.valueOf(songs[0].getId()));
             byte data[] = new byte[4096];
             long total = 0;
             int count;
@@ -130,9 +127,7 @@ public class DownloadMusic extends AsyncTask<Song,Integer,String> {
                 song = new FileOutputStream(fullFileNameWithPath);
                 prop.store(song,"Song from Mody app");
                 Toast.makeText(context, "File downloaded", Toast.LENGTH_SHORT).show();
-            }catch(FileNotFoundException ex){
-                Log.d("onPostExecute",ex.getMessage());
-            } catch (IOException ex) {
+            }catch (IOException ex) {
                 Log.d("onPostExecute",ex.getMessage());
             }finally {
                 if(song!=null)

@@ -7,6 +7,10 @@ import android.os.NetworkOnMainThreadException;
 import android.util.Log;
 import android.widget.TextView;
 import com.example.modyapp.app.R;
+import com.vk.sdk.VKAccessToken;
+import com.vk.sdk.VKScope;
+import com.vk.sdk.VKSdk;
+import com.vk.sdk.VKSdkListener;
 import com.vk.sdk.api.*;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -22,6 +26,7 @@ import java.io.InputStream;
 import java.net.*;
 
 public class VKActions {
+
     private static String lyricsText;
     private static Activity playerActivity;
     private static VKRequest.VKRequestListener requestLyrics = new VKRequest.VKRequestListener() {
@@ -47,11 +52,11 @@ public class VKActions {
     /**
      * Get lyrics of current playing song
      * @param lyrics_id - id of lyrics of current song
-     * @param act - activity where textView should be changed
+     * @param sourceActivity - activity where textView should be changed
      *            after finishing request processing
      */
-    public static void getLyrics(Integer lyrics_id,Activity act) {
-        VKActions.playerActivity = act;
+    public static void getLyrics(Integer lyrics_id,Activity sourceActivity) {
+        VKActions.playerActivity = sourceActivity;
         VKApi.audio().getLyrics(
                 VKParameters.from("lyrics_id", lyrics_id)).
                 executeWithListener(requestLyrics);
@@ -62,20 +67,29 @@ public class VKActions {
      * If response is empty show standard background
      * @param searchQuery - search query for get request
      *                    for source of images for background
-     * @param act - activity to be changed after successful
+     * @param sourceActivity - activity to be changed after successful
      *            receiving response
      */
-    public static void getBackground(String searchQuery,final Activity act){
-        VKActions.playerActivity = act;
+    public static void setBackground(String searchQuery,final Activity sourceActivity){
+        VKActions.playerActivity = sourceActivity;
         String template = "https://itunes.apple.com/search?term=";
         String responseString = "";
         String requestUrl = template + searchQuery + "&limit=1";
-        HttpResponse response = null;
-        long startTime = System.currentTimeMillis();
+        HttpResponse response = requestToItunesToGetBg(requestUrl);
+        try {
+            responseString = response != null ? EntityUtils.toString(response.getEntity()) : "";
+        }catch(IOException ex){
+            Log.i("IO","Can't get response string");
+        }
+        Drawable image = getBackgroundImageDrawable(responseString);
+        setBackgroundInView(image);
+    }
+
+    private static HttpResponse requestToItunesToGetBg(String requestUrl){
         try {
             HttpClient client = new DefaultHttpClient();
             HttpGet request = new HttpGet(new URI(requestUrl));
-            response = client.execute(request);
+            return client.execute(request);
         } catch (URISyntaxException e) {
             Log.i("URISyntaxException", "ex");
         } catch (ClientProtocolException e) {
@@ -85,29 +99,34 @@ public class VKActions {
         } catch(NetworkOnMainThreadException ex ){
             Log.i("NetworkThreadException", "ex");
         }
+        return null;
+    }
+
+    private static Drawable getBackgroundImageDrawable(String responseString){
         try {
-            responseString = response != null ? EntityUtils.toString(response.getEntity()) : "";
-        }catch(IOException ex){
-            Log.i("IO","Can't get response string");
-        }
-        Drawable image = null;
-        if(responseString.length()>0) {
-            try {
-                JSONObject responseJSON = new JSONObject(responseString);
-                if((Integer)responseJSON.get("resultCount")!=0){
-                    String bgURL = (String)((JSONObject)responseJSON.getJSONArray("results").get(0))
-                            .get("artworkUrl100");
-                    if(bgURL.length()>0)
-                        bgURL = bgURL.replace("100x100","600x600");
-                    image = ImageFromUrl(bgURL);
-                }
-            }catch(JSONException ex){
-                Log.i("json","Error while getting needed data from response");
+            JSONObject responseJSON = new JSONObject(responseString);
+            if ((Integer) responseJSON.get("resultCount") != 0) {
+                String bgURL = getBackgroundImageURL(responseJSON);
+                return getImageFromUrl(bgURL);
             }
+        }catch (JSONException ex){
+            Log.i("JSONEx","Error while making JSON object from response");
         }
-        setBackground(image);
-        Log.i("Time of response","Total elapsed http request/response time in milliseconds: " +
-                (System.currentTimeMillis() - startTime));
+        return null;
+    }
+
+    private static String getBackgroundImageURL(JSONObject responseJSON){
+        try {
+            String bgURL =
+            (String)((JSONObject)responseJSON.getJSONArray("results").get(0))
+                    .get("artworkUrl100");
+            if(bgURL.length()>0)
+                bgURL = bgURL.replace("100x100","600x600");
+            return bgURL;
+        }catch(JSONException ex){
+            Log.i("json","Error while getting needed data from response");
+        }
+        return "";
     }
 
     /**
@@ -116,11 +135,11 @@ public class VKActions {
      * @param bgURL - URL of image to be background
      * @return - object(DrawableImage) for background
      */
-    private static Drawable ImageFromUrl(String bgURL){
+    private static Drawable getImageFromUrl(String bgURL){
         InputStream is;
         try {
             is = (InputStream) new URL(bgURL).getContent();
-            return new BitmapDrawable(is);
+            return new BitmapDrawable(playerActivity.getResources(),is);
         }catch(IOException ex){
             Log.i("IOException","Failed to open stream");
         }
@@ -131,7 +150,7 @@ public class VKActions {
      * Setting background for player
      * @param image - object (DrawableImage) to be background for player
      */
-    private static void setBackground(final Drawable image){
+    private static void setBackgroundInView(final Drawable image){
         VKActions.playerActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {

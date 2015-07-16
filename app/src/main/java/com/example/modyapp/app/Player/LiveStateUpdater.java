@@ -7,11 +7,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import com.example.modyapp.app.MusicPlayer;
 import com.example.modyapp.app.R;
 import com.example.modyapp.app.Song.Song;
 import com.example.modyapp.app.VKActions.VKActions;
-import com.vk.sdk.api.model.VKApiAudio;
 
 public class LiveStateUpdater extends AsyncTask<Void, Integer, Void>{
 
@@ -50,15 +48,15 @@ public class LiveStateUpdater extends AsyncTask<Void, Integer, Void>{
      * Full updating state when song's been changed
      */
     private void UpdateState(){
-        VKApiAudio song = MusicPlayer.getCurrentSong();
-        artistTextView.setText(song.artist);
-        songTitleTextView.setText(song.title);
+        Song song = MusicPlayer.getCurrentSong();
+        artistTextView.setText(song.getArtist());
+        songTitleTextView.setText(song.getTitle());
         songIndexNumberTextView
                 .setText((MusicPlayer.getPositionInList()+1)+" of "
                         + MusicPlayer.getListLength());
         songDurationTextView
-                .setText(Song.transformDuration(song.duration));
-        barSeeking.setMax(song.duration);
+                .setText(Song.transformDuration(song.getDuration()));
+        barSeeking.setMax(song.getDuration());
         playerActivity.findViewById(R.id.player_backgroundKeeper).setBackground(null);
     }
 
@@ -79,14 +77,14 @@ public class LiveStateUpdater extends AsyncTask<Void, Integer, Void>{
     protected Void doInBackground(Void... params) {
         barSeeking.setProgress(0);
         barSeeking.setMax(MusicPlayer.
-                getCurrentSong().duration);
-        songId = MusicPlayer.getCurrentSong().id;
+                getCurrentSong().getDuration());
+        songId = MusicPlayer.getCurrentSong().getId();
         while(true){
             if(MusicPlayer.getCurrentSong()!=null) {
-                if (songId == MusicPlayer.getCurrentSong().id) {
+                if (songId.equals(MusicPlayer.getCurrentSong().getId())) {
                     if(newSong){
                         publishProgress(MusicPlayer.getSeeking());
-                        VKActions.getBackground(Song.transformNameForBgSearch(
+                        VKActions.setBackground(Song.transformNameForBgSearch(
                                 MusicPlayer.getCurrentSong()), playerActivity);
                     }
                     try {
@@ -132,10 +130,11 @@ public class LiveStateUpdater extends AsyncTask<Void, Integer, Void>{
                 barSeeking.setProgress(values[0] / 1000);
                 textSeeking.setText(Song.transformDuration(values[0] / 1000));
             }
-        }else if(values.length>0 && newSong){// update bg and lyrics
-            VKApiAudio song = MusicPlayer.getCurrentSong();
-            if(song.lyrics_id!=0){
-                VKActions.getLyrics(song.lyrics_id,playerActivity);
+        }else if(values.length>0 && newSong){// update state of all elements in view
+            UpdateState();
+            Song song = MusicPlayer.getCurrentSong();
+            if(song.getLyricsId()!=0){
+                VKActions.getLyrics(song.getLyricsId(),playerActivity);
                 lyricsButton.setEnabled(true);
                 if(isVisible)
                     lyricsView.setVisibility(View.VISIBLE);
@@ -149,8 +148,7 @@ public class LiveStateUpdater extends AsyncTask<Void, Integer, Void>{
             if(lyricsButton.isEnabled()){
                 isVisible = (lyricsView.getVisibility()==View.VISIBLE);
             }
-            songId = MusicPlayer.getCurrentSong().id;
-            UpdateState();
+            songId = MusicPlayer.getCurrentSong().getId();
             newSong = true;
         }
     }

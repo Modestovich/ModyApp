@@ -10,27 +10,23 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.*;
+import com.example.modyapp.app.Player.MusicPlayer;
 import com.example.modyapp.app.Song.DownloadMusic;
 import com.example.modyapp.app.Song.Song;
 import com.example.modyapp.app.Song.SongAdapter;
 import com.vk.sdk.*;
-import com.vk.sdk.api.*;
+import com.vk.sdk.api.VKApi;
+import com.vk.sdk.api.VKError;
+import com.vk.sdk.api.VKRequest;
+import com.vk.sdk.api.VKResponse;
 import com.vk.sdk.api.model.VKApiAudio;
 import com.vk.sdk.api.model.VkAudioArray;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Properties;
 
 public class ListActivity extends ActionBarActivity {
-
-    /**
-     * My application ID in vk.com
-     */
-    private final String VK_APP_ID = "4935615";
-    /**
-     * Token of current session for accessing VK API
-     */
-    private VKAccessToken token;
 
     private ListView songListView;
     private Button scrollToTop;
@@ -67,7 +63,7 @@ public class ListActivity extends ActionBarActivity {
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             final Song clickedSong = (Song) songListView.getItemAtPosition(position);
             if(MusicPlayer.getCurrentSong()!=null &&
-                    MusicPlayer.getCurrentSong().id != clickedSong.getId()) {
+                    MusicPlayer.getCurrentSong().getId().equals(clickedSong.getId())) {
                 MusicPlayer.startAfterClearingConditions(clickedSong,position);
             }
             else{
@@ -95,64 +91,28 @@ public class ListActivity extends ActionBarActivity {
      * Scroll to top of list
      */
     private Button.OnClickListener scrollUp = new View.OnClickListener() {
+        private ValueAnimator animator;
+        private float scale;
+
         @Override
         public void onClick(View v) {
             if(songListView!=null){
                 songListView.smoothScrollToPositionFromTop(0,0,0);
+                hideScrollButtonWhileUp();
             }
         }
-    };
-
-    /**
-     * Get access to VK API
-     */
-    private final VKSdkListener sdkListener = new VKSdkListener() {
-        @Override
-        public void onCaptchaError(VKError captchaError) {
-            Log.i("onCaptchaError", captchaError.errorMessage);
-        }
-
-        @Override
-        public void onTokenExpired(VKAccessToken expiredToken) {
-            Log.i("onTokenExpired","onTokenExpired");
-        }
-
-        @Override
-        public void onAccessDenied(VKError authorizationError){
-            Log.i("Access denied", authorizationError.errorMessage);
-        }
-
-        @Override
-        public void onReceiveNewToken(VKAccessToken newToken) {
-            token = newToken;
-            Log.i("onReceiveNewToken",newToken.accessToken);
-        }
-
-        @Override
-        public void onAcceptUserToken(VKAccessToken token) {
-            Log.i("onAcceptUserToken",token.accessToken);
-        }
-    };
-
-    /**
-     * Get songs from my profile from vk.com
-     */
-    private VKRequest.VKRequestListener vkListener = new VKRequest.VKRequestListener() {
-        @Override
-        public void onComplete(VKResponse response) {
-            VkAudioArray songs = (VkAudioArray) response.parsedModel;
-            listOfSongs = new ArrayList<>();
-            for(VKApiAudio song: songs){
-                listOfSongs.add(new Song(song));
-            }
-            songsAdapter = new SongAdapter(getApplicationContext(), listOfSongs);
-            songListView.setAdapter(songsAdapter);
-            MusicPlayer.populateMusicPlayer(listOfSongs);
-        }
-
-        @Override
-        public void onError(VKError error) {
-            Log.i("VKError",error.toString());
+        private void hideScrollButtonWhileUp(){
+            scale = getResources().getDisplayMetrics().density;
+            animator = ValueAnimator.ofInt(scrollToTop.getHeight(),0);
+            animator.setDuration(200);
+            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    Integer value = (Integer) animation.getAnimatedValue();
+                    scrollToTop.getLayoutParams().height = (int) (value * scale);
+                    scrollToTop.requestLayout();
+                }
+            });
+            animator.start();
         }
     };
 
@@ -180,7 +140,7 @@ public class ListActivity extends ActionBarActivity {
             }
             else {
                 if(mustBeVisible) {
-                    createAndMakeAnimation(25,0);
+                    createAndMakeAnimation(scrollToTop.getHeight(),0);
                     mustBeVisible = false;
                 }
             }
@@ -202,29 +162,50 @@ public class ListActivity extends ActionBarActivity {
     };
 
     /**
-     * Scope of accessing parameters for my application
+     * Get songs from my profile from vk.com
      */
-    private static final String[] sMyScope = new String[] {
-            VKScope.FRIENDS,
-            VKScope.WALL,
-            VKScope.PHOTOS,
-            VKScope.AUDIO
+    private VKRequest.VKRequestListener populateList = new VKRequest.VKRequestListener() {
+        @Override
+        public void onComplete(VKResponse response) {
+            VkAudioArray songs = (VkAudioArray) response.parsedModel;
+            listOfSongs = new ArrayList<Song>();
+            for(VKApiAudio song: songs){
+                listOfSongs.add(new Song(song));
+            }
+            songsAdapter = new SongAdapter(getApplicationContext(), listOfSongs);
+            songListView.setAdapter(songsAdapter);
+            MusicPlayer.populateMusicPlayer(listOfSongs);
+        }
+
+        @Override
+        public void onError(VKError error) {
+            Log.i("VKError",error.toString());
+        }
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list);
-        synchronized (getApplicationContext()){
-            initializeAndAuthorizeVk();
-        }
-        InitializeProgress();
+        songListView = (ListView) findViewById(R.id.songList);
+        songListView.setOnItemClickListener(itemClickListener);
+        songListView.setOnScrollListener(isScrollToTopAvailable);
+        scrollToTop = (Button) findViewById(R.id.scroll_to_top);
+        scrollToTop.setOnClickListener(scrollUp);
+        ((SearchView) findViewById(R.id.searchMusic))
+                .setOnQueryTextListener(searchListener);
+        populateMusicList();
+        //InitializeProgress();
        /* getFilesListFromDirectory(Environment.
                 getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).toString());*/
-        synchronized (getApplicationContext()) {
-            populateMusicList();
-        }
+    }
 
+    /**
+     * Populating music list with my audio from vk.com
+     */
+    private void populateMusicList(){
+        VKRequest request = VKApi.audio().get();
+        request.executeWithListener(populateList);
     }
 
     private void deleteFilesFromDirectory(String folderPath){
@@ -274,72 +255,24 @@ public class ListActivity extends ActionBarActivity {
     }
 
     /**
-     * Populating music list with my audio from vk.com
-     */
-    private void populateMusicList() {
-        songListView = (ListView) findViewById(R.id.songList);
-        songListView.setOnItemClickListener(itemClickListener);
-        songListView.setOnScrollListener(isScrollToTopAvailable);
-        scrollToTop = (Button) findViewById(R.id.scroll_to_top);
-        scrollToTop.setOnClickListener(scrollUp);
-        ((SearchView) findViewById(R.id.searchMusic))
-                .setOnQueryTextListener(searchListener);
-        VKRequest request = VKApi.audio().get();
-        request.executeWithListener(vkListener);
-    }
-
-
-    /**
-     * Initialize application with existing/creating token and
-     * application id
-     */
-    private void initializeAndAuthorizeVk() {
-        VKUIHelper.onCreate(this);
-
-        VKSdk.initialize(sdkListener, VK_APP_ID);
-        /*if(!VKSdk.wakeUpSession()){
-            VKSdk.authorize(sMyScope, true, false);
-        }
-        else {
-            VKSdk.authorize(sMyScope, false, false);
-        }*/
-        VKSdk.wakeUpSession();
-        VKSdk.authorize(sMyScope, false, false);
-        //VKSdk.authorize(sMyScope, true, false);
-
-        //String[] fingerprints = VKUtil.getCertificateFingerprint(this, this.getPackageName());
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        VKUIHelper.onActivityResult(this, requestCode, resultCode, data);
-    }
-
-
-    /**
      * Checking if current playing element is in list of visible - make mark on it
      * and otherwise if previous is in current playing - put off mark from it
-     *
-     * OnPostResume instead of onResume because view can be not fully displayed
-     * so fires NullPointerException
      */
     @Override
-    protected void onPostResume() {
-        super.onPostResume();
+    protected void onResume() {
+        super.onResume();
         if(MusicPlayer.getCurrentSong()!=null) {
-            Integer needle = MusicPlayer.getCurrentSong().id;
-            Log.i("Current playing songId", needle + "");
-            for (int i = songListView.getFirstVisiblePosition();
-                 i <= songListView.getLastVisiblePosition(); i++) {
-                Log.i("Song#" + i, ((Song) songListView.getAdapter().getItem(i)).getId() + "");
+            Integer needle = MusicPlayer.getCurrentSong().getId();
+            Integer startPoint = songListView.getFirstVisiblePosition();
+            Integer endPoint = songListView.getLastVisiblePosition();
+            for (int i = startPoint;i<= endPoint; i++) {
                 try {
                     if (needle.equals(((Song) songListView.getAdapter().getItem(i)).getId()))
-                        (songListView.getChildAt(i).
+                        (songListView.getChildAt(i-startPoint).
                                 findViewById(R.id.player_playing)).
                                 setVisibility(View.VISIBLE);
                     else {
-                            (songListView.getChildAt(i).
+                            (songListView.getChildAt(i-startPoint).
                                     findViewById(R.id.player_playing)).
                                     setVisibility(View.INVISIBLE);
                     }

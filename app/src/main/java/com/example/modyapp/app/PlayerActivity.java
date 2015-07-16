@@ -2,6 +2,7 @@ package com.example.modyapp.app;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import com.example.modyapp.app.Player.LiveStateUpdater;
 
 public class PlayerActivity extends Activity {
@@ -35,5 +36,20 @@ public class PlayerActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
         updateScreen.cancel(true);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        updateScreen.cancel(true);
+        updateScreen = null;
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(updateScreen==null) {
+            updateScreen = new LiveStateUpdater(PlayerActivity.this);
+            updateScreen.execute();
+        }
     }
 }

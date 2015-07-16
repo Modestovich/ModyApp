@@ -5,13 +5,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.text.method.ScrollingMovementMethod;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 import com.example.modyapp.app.ListActivity;
-import com.example.modyapp.app.MusicPlayer;
+import com.example.modyapp.app.Player.MusicPlayer;
 import com.example.modyapp.app.Player.Repeat;
 import com.example.modyapp.app.R;
 import com.example.modyapp.app.Song.Song;
@@ -64,7 +63,7 @@ public class PlayerHeader extends Fragment {
     private View.OnClickListener lyricsClick = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            Integer lyrId = MusicPlayer.getCurrentSong().lyrics_id;
+            Integer lyrId = MusicPlayer.getCurrentSong().getLyricsId();
             if(lyricsView.getVisibility()==View.INVISIBLE) {
                 if (lyrId > 0) {
                     lyricsView.setVisibility(View.VISIBLE);
@@ -116,9 +115,9 @@ public class PlayerHeader extends Fragment {
         backgroundKeeper = (LinearLayout) view.findViewById(R.id.player_backgroundKeeper);
         backgroundKeeper.setOnClickListener(showControls);
         ((TextView) view.findViewById(R.id.player_artist))
-            .setText(MusicPlayer.getCurrentSong().artist);
+            .setText(MusicPlayer.getCurrentSong().getArtist());
         ((TextView) view.findViewById(R.id.player_title))
-            .setText(MusicPlayer.getCurrentSong().title);
+            .setText(MusicPlayer.getCurrentSong().getTitle());
         ((TextView) view.findViewById(R.id.player_song_number))
                 .setText((MusicPlayer.getPositionInList()+1)+" of "
                         + MusicPlayer.getListLength());

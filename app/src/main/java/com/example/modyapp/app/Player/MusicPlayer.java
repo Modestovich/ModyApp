@@ -1,10 +1,8 @@
-package com.example.modyapp.app;
+package com.example.modyapp.app.Player;
 
 import android.media.MediaPlayer;
 import android.util.Log;
-import com.example.modyapp.app.Player.Repeat;
 import com.example.modyapp.app.Song.Song;
-import com.vk.sdk.api.model.VKApiAudio;
 import java.io.IOException;
 import java.security.AccessController;
 import java.util.*;
@@ -19,7 +17,7 @@ public final class MusicPlayer {
     private static boolean isPlaying;
     private static boolean canSeek;
     private static boolean randomFlag = false;
-    private static ArrayList<Integer> sequence = new ArrayList<>();
+    private static ArrayList<Integer> sequence = new ArrayList<Integer>();
     private static Integer positionInSequence=0;
     private static boolean isNext;
     private static Random random = new Random();
@@ -57,6 +55,7 @@ public final class MusicPlayer {
      * @param position - current position of song in list
      */
     public static void Start(Song song, Integer position){
+        //Log.i("");
         if (player != null) {
             if(!song.equals(currentSong))
                 player.reset();
@@ -67,7 +66,7 @@ public final class MusicPlayer {
             player.setOnCompletionListener(completionListener);
         }
         try {
-            player.setDataSource(song.getSong().url);
+            player.setDataSource(song.getURL());
         } catch (IOException ex) {
             Log.i("Invalid url", "Invalid url");
         }
@@ -209,8 +208,8 @@ public final class MusicPlayer {
      * Get current song of player
      * @return current song of player if exists
      */
-    public static VKApiAudio getCurrentSong(){
-        return currentSong==null? null : currentSong.getSong();
+    public static Song getCurrentSong(){
+        return currentSong==null? null : currentSong;
     }
 
     /**
@@ -218,7 +217,7 @@ public final class MusicPlayer {
      * @return duration in necessary format mm:ss
      */
     public static String getCurrentSongDuration(){
-        return currentSong.getDuration();
+        return currentSong.getTransformedDuration();
     }
 
     /**

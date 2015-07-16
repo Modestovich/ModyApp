@@ -5,8 +5,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
-import com.example.modyapp.app.MusicPlayer;
+import com.example.modyapp.app.Player.MusicPlayer;
 import com.example.modyapp.app.R;
+
 import java.util.ArrayList;
 
 public class SongAdapter extends BaseAdapter implements Filterable{
@@ -36,25 +37,26 @@ public class SongAdapter extends BaseAdapter implements Filterable{
             view = LayoutInflater.from(context).inflate(R.layout.list_view_music,
                     parent,false);
         }
-        Song current_song = temporaryData.get(position);
+        Song currentSong = temporaryData.get(position);
         ((TextView) view.findViewById(R.id.song_name))
-                .setText(current_song.getName());
+                .setText(currentSong.getTitle());
         ((TextView) view.findViewById(R.id.artist_name))
-                .setText(current_song.getSong().artist);
+                .setText(currentSong.getArtist());
         ((TextView) view.findViewById(R.id.song_duration))
-                .setText(current_song.getDuration());
-        //detecting current playing song
-        if(MusicPlayer.getCurrentSong()!=null &&
-                current_song.getSong().id == MusicPlayer.getCurrentSong().id) {
+                .setText(currentSong.getTransformedDuration());
+        if(isCurrentlyPlaying(currentSong)) {
             view.findViewById(R.id.player_playing)
                     .setVisibility(View.VISIBLE);
         }else{
             view.findViewById(R.id.player_playing)
                     .setVisibility(View.INVISIBLE);
         }
-
-
         return view;
+    }
+
+    private boolean isCurrentlyPlaying(Song currentSong){
+        return MusicPlayer.getCurrentSong()!=null &&
+                currentSong.getId().equals(MusicPlayer.getCurrentSong().getId());
     }
 
     @Override
@@ -69,7 +71,7 @@ public class SongAdapter extends BaseAdapter implements Filterable{
 
     @Override
     public long getItemId(int position) {
-        return  temporaryData.get(position).getSong().id;
+        return  temporaryData.get(position).getId();
     }
 
     /**
@@ -85,7 +87,7 @@ public class SongAdapter extends BaseAdapter implements Filterable{
                 constraint = constraint.length()>0? constraint.toString().toLowerCase():"";
                 FilterResults result = new FilterResults();
                 if (constraint.toString().length() > 0) {
-                    ArrayList<Song> filterList = new ArrayList<>();
+                    ArrayList<Song> filterList = new ArrayList<Song>();
                     for(Song song: fullListOfSongs){
                         String textForFilter = song.getNameToFilter();
                         if(textForFilter.toLowerCase().contains(constraint)){

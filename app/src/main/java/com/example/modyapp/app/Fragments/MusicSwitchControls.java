@@ -7,7 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-import com.example.modyapp.app.MusicPlayer;
+import com.example.modyapp.app.Player.MusicPlayer;
 import com.example.modyapp.app.R;
 
 public class MusicSwitchControls extends Fragment {
@@ -19,25 +19,25 @@ public class MusicSwitchControls extends Fragment {
     private View.OnClickListener prevTrack = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-        prevId = MusicPlayer.getCurrentSong().id;
-        MusicPlayer.Prev();
-        if(!isPlaying){
-            setTextAndPlay(getActivity().getString(R.string.player_pause),true);
-        }
-        if(prevId!=MusicPlayer.getCurrentSong().id)
-            ((TextView)getActivity().findViewById(R.id.player_lyrics)).setText("");
+            prevId = MusicPlayer.getCurrentSong().getId();
+            MusicPlayer.Prev();
+            if (!isPlaying) {
+                setTextAndPlay(getActivity().getString(R.string.player_pause), true);
+            }
+            if (prevId.equals(MusicPlayer.getCurrentSong().getId()))
+                ((TextView) getActivity().findViewById(R.id.player_lyrics)).setText("");
         }
     };
     private View.OnClickListener nextTrack = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-        prevId = MusicPlayer.getCurrentSong().id;
-        MusicPlayer.Next();
-        if(!isPlaying){
-            setTextAndPlay(getActivity().getString(R.string.player_pause),true);
-        }
-        if(prevId!=MusicPlayer.getCurrentSong().id)
-            ((TextView)getActivity().findViewById(R.id.player_lyrics)).setText("");
+            prevId = MusicPlayer.getCurrentSong().getId();
+            MusicPlayer.Next();
+            if (!isPlaying) {
+                setTextAndPlay(getActivity().getString(R.string.player_pause), true);
+            }
+            if (prevId.equals(MusicPlayer.getCurrentSong().getId()))
+                ((TextView) getActivity().findViewById(R.id.player_lyrics)).setText("");
         }
     };
     private View.OnClickListener startPauseTrack = new View.OnClickListener() {
