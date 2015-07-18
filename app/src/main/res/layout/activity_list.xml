@@ -40,4 +40,14 @@
                 android:fastScrollEnabled="true"
                 android:overScrollMode="never"
                 />
+        <Button
+                android:layout_width="match_parent"
+                android:layout_height="50dip"
+                android:id="@+id/logout"
+                android:background="#FFFFFF"
+                android:text="Logout"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentEnd="true"
+                android:onClick="logOut"/>
+
 </RelativeLayout>

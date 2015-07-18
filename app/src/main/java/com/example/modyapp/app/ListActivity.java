@@ -70,14 +70,14 @@ public class ListActivity extends ActionBarActivity {
                 MusicPlayer.Start(clickedSong,position);
             }
             Intent playerActivity = new Intent( getApplicationContext(), PlayerActivity.class);
-            Bundle bndlanimation =
+            Bundle bundleAnimation =
                     ActivityOptions.makeCustomAnimation(getApplicationContext(),
                             R.anim.main_activity, R.anim.secondary_activity)
                             .toBundle();
             if(MusicPlayer.getCurrentSong()!=null){
                 playerActivity.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             }
-            startActivity(playerActivity, bndlanimation);
+            startActivity(playerActivity, bundleAnimation);
             //downloadSong(clickedSong);
         }
 
@@ -182,6 +182,16 @@ public class ListActivity extends ActionBarActivity {
             Log.i("VKError",error.toString());
         }
     };
+
+    public void logOut(View view){
+        VKSdk.logout();
+        Intent startUpActivity = new Intent( getApplicationContext(), StartupActivity.class);
+        Bundle bundleAnimation =
+                ActivityOptions.makeCustomAnimation(getApplicationContext(),
+                        R.anim.main_activity, R.anim.secondary_activity)
+                        .toBundle();
+        startActivity(startUpActivity, bundleAnimation);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

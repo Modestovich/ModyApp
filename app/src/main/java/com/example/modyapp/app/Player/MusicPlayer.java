@@ -11,9 +11,9 @@ public final class MusicPlayer {
 
     private static MediaPlayer player = null;
     private static ArrayList<Song> songs;
-    private static int currentSeeking;//milliseconds
+    private static int currentSeeking;
     private static Song currentSong;
-    private static Integer currentPositionInList;//position of current song in list
+    private static Integer currentPositionInList;
     private static boolean isPlaying;
     private static boolean canSeek;
     private static boolean randomFlag = false;
@@ -55,7 +55,6 @@ public final class MusicPlayer {
      * @param position - current position of song in list
      */
     public static void Start(Song song, Integer position){
-        //Log.i("");
         if (player != null) {
             if(!song.equals(currentSong))
                 player.reset();

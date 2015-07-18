@@ -6,7 +6,9 @@ import android.graphics.drawable.Drawable;
 import android.os.NetworkOnMainThreadException;
 import android.util.Log;
 import android.widget.TextView;
+import com.example.modyapp.app.Player.MusicPlayer;
 import com.example.modyapp.app.R;
+import com.example.modyapp.app.Song.Song;
 import com.vk.sdk.VKAccessToken;
 import com.vk.sdk.VKScope;
 import com.vk.sdk.VKSdk;
@@ -70,9 +72,11 @@ public class VKActions {
      * @param sourceActivity - activity to be changed after successful
      *            receiving response
      */
-    public static void setBackground(String searchQuery,final Activity sourceActivity){
+    public static void setBackground(final Activity sourceActivity){
         VKActions.playerActivity = sourceActivity;
         String template = "https://itunes.apple.com/search?term=";
+        String searchQuery = Song.transformNameForBgSearch(
+                MusicPlayer.getCurrentSong());
         String responseString = "";
         String requestUrl = template + searchQuery + "&limit=1";
         HttpResponse response = requestToItunesToGetBg(requestUrl);
@@ -97,7 +101,7 @@ public class VKActions {
         } catch (IOException e) {
             Log.i("IOException", "ex");
         } catch(NetworkOnMainThreadException ex ){
-            Log.i("NetworkThreadException", "ex");
+            Log.i("NetworkThreadException", "This has to be done in mainThread");
         }
         return null;
     }

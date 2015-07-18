@@ -57,6 +57,7 @@ public class LiveStateUpdater extends AsyncTask<Void, Integer, Void>{
         songDurationTextView
                 .setText(Song.transformDuration(song.getDuration()));
         barSeeking.setMax(song.getDuration());
+        lyricsView.setText("");
         playerActivity.findViewById(R.id.player_backgroundKeeper).setBackground(null);
     }
 
@@ -84,12 +85,13 @@ public class LiveStateUpdater extends AsyncTask<Void, Integer, Void>{
                 if (songId.equals(MusicPlayer.getCurrentSong().getId())) {
                     if(newSong){
                         publishProgress(MusicPlayer.getSeeking());
-                        VKActions.setBackground(Song.transformNameForBgSearch(
-                                MusicPlayer.getCurrentSong()), playerActivity);
+                        VKActions.setBackground(playerActivity);
+                        //do this here 'cause
+                        //can't send request not in main Thread
                     }
                     try {
                         Thread.sleep(500);
-                    } catch (Exception ex) {
+                    } catch (InterruptedException ex) {
                         ex.printStackTrace();
                     }
                     try {
@@ -100,7 +102,7 @@ public class LiveStateUpdater extends AsyncTask<Void, Integer, Void>{
                 } else {
                     try {
                         Thread.sleep(1000);//delay before changing song
-                    } catch (Exception ex) {
+                    } catch (InterruptedException ex) {
                         ex.printStackTrace();
                     }
                     publishProgress();
