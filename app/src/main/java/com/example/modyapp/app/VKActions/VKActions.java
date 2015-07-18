@@ -19,6 +19,9 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.AbstractHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,11 +29,13 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
+import java.util.concurrent.*;
 
 public class VKActions {
 
     private static String lyricsText;
     private static Activity playerActivity;
+    private static volatile HttpResponse response;
     private static VKRequest.VKRequestListener requestLyrics = new VKRequest.VKRequestListener() {
         @Override
         public void onError(VKError error) {
@@ -57,7 +62,7 @@ public class VKActions {
      * @param sourceActivity - activity where textView should be changed
      *            after finishing request processing
      */
-    public static void getLyrics(Integer lyrics_id,Activity sourceActivity) {
+    public static void setLyrics(Integer lyrics_id,Activity sourceActivity) {
         VKActions.playerActivity = sourceActivity;
         VKApi.audio().getLyrics(
                 VKParameters.from("lyrics_id", lyrics_id)).
@@ -67,8 +72,6 @@ public class VKActions {
     /**
      * Set background of player depending on current playing song
      * If response is empty show standard background
-     * @param searchQuery - search query for get request
-     *                    for source of images for background
      * @param sourceActivity - activity to be changed after successful
      *            receiving response
      */
@@ -79,7 +82,8 @@ public class VKActions {
                 MusicPlayer.getCurrentSong());
         String responseString = "";
         String requestUrl = template + searchQuery + "&limit=1";
-        HttpResponse response = requestToItunesToGetBg(requestUrl);
+        Integer timeOut = 5;
+        HttpResponse response = requestWithTimeout(requestUrl,timeOut);
         try {
             responseString = response != null ? EntityUtils.toString(response.getEntity()) : "";
         }catch(IOException ex){
@@ -89,10 +93,12 @@ public class VKActions {
         setBackgroundInView(image);
     }
 
-    private static HttpResponse requestToItunesToGetBg(String requestUrl){
+    private static HttpResponse requestWithTimeout(final String requestUrl,Integer timeOut){
         try {
-            HttpClient client = new DefaultHttpClient();
+            DefaultHttpClient client = new DefaultHttpClient();
             HttpGet request = new HttpGet(new URI(requestUrl));
+            //HttpConnectionParams.setConnectionTimeout(client.getParams(),timeOut);
+            //HttpConnectionParams.setSoTimeout(client.getParams(), timeOut);
             return client.execute(request);
         } catch (URISyntaxException e) {
             Log.i("URISyntaxException", "ex");

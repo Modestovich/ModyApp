@@ -74,6 +74,9 @@ public class Song{
     public Integer getDuration(){
         return this.song.duration;
     }
+    public boolean hasLyrics(){
+        return getLyricsId()>0;
+    }
     /**
      * Compare two songs by id.
      * @param song - comparable object

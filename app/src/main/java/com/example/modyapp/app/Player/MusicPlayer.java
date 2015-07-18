@@ -1,6 +1,7 @@
 package com.example.modyapp.app.Player;
 
 import android.media.MediaPlayer;
+import android.provider.MediaStore;
 import android.util.Log;
 import com.example.modyapp.app.Song.Song;
 import java.io.IOException;
@@ -21,6 +22,8 @@ public final class MusicPlayer {
     private static Integer positionInSequence=0;
     private static boolean isNext;
     private static Random random = new Random();
+    private static Integer errorWhat = 0;
+    private static Integer errorExtra = 0;
 
     /**
      * MediaPlayer is waiting for source to load and only then begin working
@@ -41,7 +44,25 @@ public final class MusicPlayer {
 
         @Override
         public void onCompletion(MediaPlayer mp) {
-            Next();
+            player.seekTo(0);
+            if(noErrors()) {
+                Next();
+            }
+            errorWhat = 0;
+            errorExtra = 0;
+        }
+    };
+
+    private static boolean noErrors(){
+        return (errorExtra==0 && errorWhat==0);
+    }
+
+    private static MediaPlayer.OnErrorListener errorListener = new MediaPlayer.OnErrorListener() {
+        @Override
+        public boolean onError(MediaPlayer mp, int what, int extra) {
+            errorWhat = what;
+            errorExtra = extra;
+            return false;
         }
     };
 
@@ -63,6 +84,7 @@ public final class MusicPlayer {
             player = new MediaPlayer();
             player.setOnPreparedListener(preparedListener);
             player.setOnCompletionListener(completionListener);
+            player.setOnErrorListener(errorListener);
         }
         try {
             player.setDataSource(song.getURL());
@@ -328,6 +350,19 @@ public final class MusicPlayer {
      * @return - if user is sliding seekBar or not
      */
     public static boolean isCanSeek(){
-        return canSeek;
+        return canSeek&&player.getCurrentPosition()<player.getDuration();
     }
 }
+
+/**
+ Errors of mediaPlayer
+ 07-18 07:27:13.935    6116-6116/com.example.modyapp.app I/Error IO? -1004
+ 07-18 07:27:13.939    6116-6116/com.example.modyapp.app I/Error MALFORMED? -1007
+ 07-18 07:27:13.955    6116-6116/com.example.modyapp.app I/Error ProgressPlay? 200
+ 07-18 07:27:13.959    6116-6116/com.example.modyapp.app I/Error SERVER DIED? 100
+ 07-18 07:27:13.967    6116-6116/com.example.modyapp.app I/Error UNKNOWN? 1
+ 07-18 07:27:13.971    6116-6116/com.example.modyapp.app I/Error Timeout? -110
+ 07-18 07:27:13.983    6116-6116/com.example.modyapp.app I/Error UNSupported? -1010
+ 07-18 07:27:13.991    6116-6116/com.example.modyapp.app I/Media's not seekable? 801
+ 07-18 07:27:13.991    6116-6116/com.example.modyapp.app I/Media bad interleaving? 800
+ */

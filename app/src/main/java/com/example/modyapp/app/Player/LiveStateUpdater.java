@@ -2,8 +2,6 @@ package com.example.modyapp.app.Player;
 
 import android.app.Activity;
 import android.os.AsyncTask;
-import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -14,8 +12,6 @@ import com.example.modyapp.app.VKActions.VKActions;
 public class LiveStateUpdater extends AsyncTask<Void, Integer, Void>{
 
     private Integer songId;
-    private boolean newSong = true;
-    private boolean isVisible = false;
     private SeekBar barSeeking;
     private TextView textSeeking;
     private TextView lyricsView;
@@ -47,7 +43,7 @@ public class LiveStateUpdater extends AsyncTask<Void, Integer, Void>{
     /**
      * Full updating state when song's been changed
      */
-    private void UpdateState(){
+    private void updateState(){
         Song song = MusicPlayer.getCurrentSong();
         artistTextView.setText(song.getArtist());
         songTitleTextView.setText(song.getTitle());
@@ -56,9 +52,27 @@ public class LiveStateUpdater extends AsyncTask<Void, Integer, Void>{
                         + MusicPlayer.getListLength());
         songDurationTextView
                 .setText(Song.transformDuration(song.getDuration()));
+        barSeeking.setProgress(0);
         barSeeking.setMax(song.getDuration());
         lyricsView.setText("");
         playerActivity.findViewById(R.id.player_backgroundKeeper).setBackground(null);
+    }
+    private void updateLyrics(){
+        Song song = MusicPlayer.getCurrentSong();
+        if(song.hasLyrics()){
+            VKActions.setLyrics(song.getLyricsId(), playerActivity);
+            lyricsView.setAlpha(1.0f);
+            lyricsButton.setEnabled(true);
+        }else {
+            lyricsView.setAlpha(0.0f);
+            lyricsButton.setEnabled(false);
+        }
+    }
+    private void updateProgress(Integer... values){
+        if(values[0]<0)//while processing new song duration is null so this is the resolve of problem
+            values[0] = 0;
+        barSeeking.setProgress(values[0] / 1000);
+        textSeeking.setText(Song.transformDuration(values[0] / 1000));
     }
 
     @Override
@@ -79,39 +93,16 @@ public class LiveStateUpdater extends AsyncTask<Void, Integer, Void>{
         barSeeking.setProgress(0);
         barSeeking.setMax(MusicPlayer.
                 getCurrentSong().getDuration());
-        songId = MusicPlayer.getCurrentSong().getId();
+        songId = -1;//MusicPlayer.getCurrentSong().getId();
         while(true){
+            Sleep(500);
             if(MusicPlayer.getCurrentSong()!=null) {
-                if (songId.equals(MusicPlayer.getCurrentSong().getId())) {
-                    if(newSong){
-                        publishProgress(MusicPlayer.getSeeking());
-                        VKActions.setBackground(playerActivity);
-                        //do this here 'cause
-                        //can't send request not in main Thread
-                    }
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException ex) {
-                        ex.printStackTrace();
-                    }
-                    try {
-                        publishProgress(MusicPlayer.getSeeking());
-                    } catch (IllegalStateException ex) {
-                        Log.i("Ill state", "Ill state");
-                    }
-                } else {
-                    try {
-                        Thread.sleep(1000);//delay before changing song
-                    } catch (InterruptedException ex) {
-                        ex.printStackTrace();
-                    }
-                    publishProgress();
-                }
-                if (isCancelled())
-                    break;
+                makeUpdates();
             }else{
                 songId = -1;
             }
+            if(isCancelled())
+                break;
         }
         return null;
     }
@@ -125,33 +116,35 @@ public class LiveStateUpdater extends AsyncTask<Void, Integer, Void>{
     @Override
     protected void onProgressUpdate(Integer... values) {
         super.onProgressUpdate(values);
-        if(values.length>0 && !newSong) {//just update seeking
-            if(MusicPlayer.isCanSeek()) {
-                if(values[0]<0)//while processing new song duration is null so this is the resolve of problem
-                    values[0] = 0;
-                barSeeking.setProgress(values[0] / 1000);
-                textSeeking.setText(Song.transformDuration(values[0] / 1000));
-            }
-        }else if(values.length>0 && newSong){// update state of all elements in view
-            UpdateState();
-            Song song = MusicPlayer.getCurrentSong();
-            if(song.getLyricsId()!=0){
-                VKActions.getLyrics(song.getLyricsId(),playerActivity);
-                lyricsButton.setEnabled(true);
-                if(isVisible)
-                    lyricsView.setVisibility(View.VISIBLE);
-            }else {
-                lyricsView.setVisibility(View.INVISIBLE);
-                lyricsButton.setEnabled(false);
-            }
-            newSong = false;
-        }
-        else {
-            if(lyricsButton.isEnabled()){
-                isVisible = (lyricsView.getVisibility()==View.VISIBLE);
-            }
+        if(isNewSong()){
+            updateState();
+            updateLyrics();
             songId = MusicPlayer.getCurrentSong().getId();
-            newSong = true;
+        }else {
+            if (MusicPlayer.isCanSeek()) {
+                updateProgress(values);
+            }
         }
+    }
+
+    private void makeUpdates(){
+        if (isNewSong()) {
+            publishProgress();
+            VKActions.setBackground(playerActivity);
+            //do this here 'cause
+            //can't send request not in main Thread
+        } else {
+            publishProgress(MusicPlayer.getSeeking());
+        }
+    }
+    private void Sleep(Integer milliseconds){
+        try {
+            Thread.sleep(milliseconds);
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
+        }
+    }
+    private boolean isNewSong(){
+        return !songId.equals(MusicPlayer.getCurrentSong().getId());
     }
 }

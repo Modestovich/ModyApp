@@ -183,16 +183,6 @@ public class ListActivity extends ActionBarActivity {
         }
     };
 
-    public void logOut(View view){
-        VKSdk.logout();
-        Intent startUpActivity = new Intent( getApplicationContext(), StartupActivity.class);
-        Bundle bundleAnimation =
-                ActivityOptions.makeCustomAnimation(getApplicationContext(),
-                        R.anim.main_activity, R.anim.secondary_activity)
-                        .toBundle();
-        startActivity(startUpActivity, bundleAnimation);
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
