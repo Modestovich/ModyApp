@@ -35,7 +35,9 @@ public class VKActions {
 
     private static String lyricsText;
     private static Activity playerActivity;
-    private static volatile HttpResponse response;
+    private static final String iTunesRequestTemplate = "https://itunes.apple.com/search?limit=1&term=";
+    private static final Integer REQUEST_TIMEOUT = 2000;
+
     private static VKRequest.VKRequestListener requestLyrics = new VKRequest.VKRequestListener() {
         @Override
         public void onError(VKError error) {
@@ -51,7 +53,7 @@ public class VKActions {
                 ((TextView)playerActivity.findViewById(R.id.player_lyrics))
                         .setText(lyricsText);
             }catch(JSONException ex){
-                Log.i("Json Text",response.responseString);
+                Log.i("JSON",response.responseString);
             }
         }
     };
@@ -77,19 +79,18 @@ public class VKActions {
      */
     public static void setBackground(final Activity sourceActivity){
         VKActions.playerActivity = sourceActivity;
-        String template = "https://itunes.apple.com/search?term=";
         String searchQuery = Song.transformNameForBgSearch(
                 MusicPlayer.getCurrentSong());
+        String requestUrl = iTunesRequestTemplate + searchQuery;
+        HttpResponse response = requestWithTimeout(requestUrl,REQUEST_TIMEOUT);
         String responseString = "";
-        String requestUrl = template + searchQuery + "&limit=1";
-        Integer timeOut = 5;
-        HttpResponse response = requestWithTimeout(requestUrl,timeOut);
         try {
             responseString = response != null ? EntityUtils.toString(response.getEntity()) : "";
         }catch(IOException ex){
             Log.i("IO","Can't get response string");
         }
-        Drawable image = getBackgroundImageDrawable(responseString);
+        Drawable image = responseString.length()>0 ? getBackgroundImageDrawable(responseString)
+                : null;
         setBackgroundInView(image);
     }
 
@@ -97,8 +98,8 @@ public class VKActions {
         try {
             DefaultHttpClient client = new DefaultHttpClient();
             HttpGet request = new HttpGet(new URI(requestUrl));
-            //HttpConnectionParams.setConnectionTimeout(client.getParams(),timeOut);
-            //HttpConnectionParams.setSoTimeout(client.getParams(), timeOut);
+            HttpConnectionParams.setConnectionTimeout(client.getParams(),timeOut);
+            HttpConnectionParams.setSoTimeout(client.getParams(), timeOut);
             return client.execute(request);
         } catch (URISyntaxException e) {
             Log.i("URISyntaxException", "ex");

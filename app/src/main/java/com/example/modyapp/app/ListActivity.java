@@ -14,6 +14,8 @@ import com.example.modyapp.app.Player.MusicPlayer;
 import com.example.modyapp.app.Song.DownloadMusic;
 import com.example.modyapp.app.Song.Song;
 import com.example.modyapp.app.Song.SongAdapter;
+import com.example.modyapp.app.Song.SongEvent.SongChangeEvent;
+import com.example.modyapp.app.Song.SongEvent.OnSongChangeListener;
 import com.vk.sdk.*;
 import com.vk.sdk.api.VKApi;
 import com.vk.sdk.api.VKError;
@@ -34,7 +36,7 @@ public class ListActivity extends ActionBarActivity {
     private DownloadMusic downloadTask;
     private ProgressDialog mProgressDialog;
     private ArrayList<Song> listOfSongs;
-
+    private SongChangeEvent songChange;
     /**
      * Search needed songs from list by entering key-words
      */
@@ -52,6 +54,19 @@ public class ListActivity extends ActionBarActivity {
                 songsAdapter.notifyDataSetChanged();
             }
             return true;
+        }
+    };
+
+    private OnSongChangeListener songChangeListener = new OnSongChangeListener() {
+        @Override
+        public void songChanged(Song oldSong, Song newSong) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    MarkCurrentlyPlayingSongInList();
+                }
+            });
+
         }
     };
 
@@ -175,6 +190,8 @@ public class ListActivity extends ActionBarActivity {
             songsAdapter = new SongAdapter(getApplicationContext(), listOfSongs);
             songListView.setAdapter(songsAdapter);
             MusicPlayer.populateMusicPlayer(listOfSongs);
+            songChange = new SongChangeEvent(null);
+            songChange.setOnSongChangeListener(songChangeListener);
         }
 
         @Override
@@ -261,6 +278,10 @@ public class ListActivity extends ActionBarActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        MarkCurrentlyPlayingSongInList();
+    }
+
+    private void MarkCurrentlyPlayingSongInList(){
         if(MusicPlayer.getCurrentSong()!=null) {
             Integer needle = MusicPlayer.getCurrentSong().getId();
             Integer startPoint = songListView.getFirstVisiblePosition();
@@ -272,23 +293,14 @@ public class ListActivity extends ActionBarActivity {
                                 findViewById(R.id.player_playing)).
                                 setVisibility(View.VISIBLE);
                     else {
-                            (songListView.getChildAt(i-startPoint).
-                                    findViewById(R.id.player_playing)).
-                                    setVisibility(View.INVISIBLE);
+                        (songListView.getChildAt(i-startPoint).
+                                findViewById(R.id.player_playing)).
+                                setVisibility(View.INVISIBLE);
                     }
                 } catch (NullPointerException ex) {
                     Log.e("NullPointerException", "View of song#"+i+" wasn't found");
                 }
             }
         }
-    }
-
-    /**
-     * Destroy current VK API session
-     */
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        VKUIHelper.onDestroy(this);
     }
 }
