@@ -2,6 +2,7 @@ package com.example.modyapp.app;
 
 import android.animation.ValueAnimator;
 import android.app.ActivityOptions;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -10,6 +11,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.*;
+import com.example.modyapp.app.Models.LocalStorage;
 import com.example.modyapp.app.Player.MusicPlayer;
 import com.example.modyapp.app.Song.DownloadMusic;
 import com.example.modyapp.app.Song.Song;
@@ -23,6 +25,9 @@ import com.vk.sdk.api.VKRequest;
 import com.vk.sdk.api.VKResponse;
 import com.vk.sdk.api.model.VKApiAudio;
 import com.vk.sdk.api.model.VkAudioArray;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -77,6 +82,7 @@ public class ListActivity extends ActionBarActivity {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             final Song clickedSong = (Song) songListView.getItemAtPosition(position);
+
             if(MusicPlayer.getCurrentSong()!=null &&
                     MusicPlayer.getCurrentSong().getId().equals(clickedSong.getId())) {
                 MusicPlayer.startAfterClearingConditions(clickedSong,position);
@@ -187,6 +193,7 @@ public class ListActivity extends ActionBarActivity {
             for(VKApiAudio song: songs){
                 listOfSongs.add(new Song(song));
             }
+            LocalStorage.setValue(LocalStorage.VK_SONG_LIST,Song.collectionToJSON(listOfSongs));
             songsAdapter = new SongAdapter(getApplicationContext(), listOfSongs);
             songListView.setAdapter(songsAdapter);
             MusicPlayer.populateMusicPlayer(listOfSongs);
@@ -221,8 +228,19 @@ public class ListActivity extends ActionBarActivity {
      * Populating music list with my audio from vk.com
      */
     private void populateMusicList(){
-        VKRequest request = VKApi.audio().get();
-        request.executeWithListener(populateList);
+        if(LocalStorage.getValue(LocalStorage.VK_SONG_LIST).length()>0){
+            AlertDialog.Builder builder = new AlertDialog.Builder(ListActivity.this);
+            builder.setTitle("First song data");
+            try {
+                builder.setMessage(Song.jsonToCollection(new JSONObject(LocalStorage.getValue(LocalStorage.VK_SONG_LIST))));
+            }catch(JSONException ex){
+                ex.printStackTrace();
+            }
+            builder.show();
+        }else {
+            VKRequest request = VKApi.audio().get();
+            request.executeWithListener(populateList);
+        }
     }
 
     private void deleteFilesFromDirectory(String folderPath){

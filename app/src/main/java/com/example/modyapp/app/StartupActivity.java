@@ -2,9 +2,13 @@ package com.example.modyapp.app;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
+import android.app.AlertDialog;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
+import com.example.modyapp.app.Models.DatabaseHelper;
+import com.example.modyapp.app.Models.LocalStorage;
 import com.vk.sdk.*;
 import com.vk.sdk.api.VKError;
 
@@ -13,7 +17,7 @@ public class StartupActivity extends Activity {
     /**
      * My application ID in vk.com
      */
-    private final String VK_APP_ID = "4935615";
+    private String VK_APP_ID;
     /**
      * Token of current session for accessing VK API
      */
@@ -27,6 +31,9 @@ public class StartupActivity extends Activity {
             VKScope.PHOTOS,
             VKScope.AUDIO
     };
+
+    private DatabaseHelper dbHelper;
+
     /**
      * Get access to VK API
      */
@@ -65,6 +72,9 @@ public class StartupActivity extends Activity {
         super.onCreate(savedInstanceState);
         VKUIHelper.onCreate(this);
         setContentView(R.layout.activity_startup);
+        dbHelper = new DatabaseHelper(this);
+        VK_APP_ID = dbHelper.GetApplicationId();
+        new LocalStorage(this);//initialize sharedPreference
         authVK();
     }
 
@@ -72,7 +82,7 @@ public class StartupActivity extends Activity {
         VKSdk.initialize(initializationVkListener, VK_APP_ID, token);
         VKSdk.wakeUpSession();
         VKSdk.authorize(sMyScope, false, false);
-    //when try to reEnter don't receive new token...(((
+        //when try to reEnter don't receive new token...(((
     }
 
     @Override
