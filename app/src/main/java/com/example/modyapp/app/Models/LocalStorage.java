@@ -14,7 +14,8 @@ public class LocalStorage {
     private static SharedPreferences localStorage;
     private static SharedPreferences.Editor editor;
     public LocalStorage(Context context){
-        localStorage = PreferenceManager.getDefaultSharedPreferences(context);
+        //localStorage = PreferenceManager.getDefaultSharedPreferences(context);
+        localStorage = context.getSharedPreferences(VK_SONG_LIST,0);
         editor = localStorage.edit();
     }
     public static void setValue(String key,Object value){
@@ -47,7 +48,7 @@ public class LocalStorage {
     }
 
     public static void clear(){
-        editor.clear();
+        editor.remove(LocalStorage.VK_SONG_LIST);
         editor.apply();
     }
 }

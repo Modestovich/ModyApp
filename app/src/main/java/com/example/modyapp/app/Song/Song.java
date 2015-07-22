@@ -1,5 +1,6 @@
 package com.example.modyapp.app.Song;
 
+import com.example.modyapp.app.Models.LocalStorage;
 import com.vk.sdk.api.model.VKApiAudio;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -7,35 +8,62 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 
 public class Song{
 
-    private VKApiAudio song;
+    /**
+     * params of song
+     */
+    private String title;
+    private Integer id;
+    private String artist;
+    private String url;
+    private Integer lyrics_id;
+    private Integer duration;
+    private String lyricsText;
+    private boolean hasImage;
+
     public Song(VKApiAudio song){
-        this.song = song;
+        title = song.title;
+        id = song.id;
+        artist = song.artist;
+        url = song.url;
+        lyrics_id = song.lyrics_id;
+        duration = song.duration;
     }
-    public VKApiAudio getSong(){
-        return this.song;
+    public Song(JSONObject json){
+        try {
+            title = json.getString("title");
+            id = json.getInt("id");
+            artist = json.getString("artist");
+            url = json.getString("url");
+            lyrics_id = json.getInt("lyrics_id");
+            duration = json.getInt("duration");
+            if (json.has("lyricsText")) {
+                lyricsText = json.getString("lyricsText");
+                hasImage = json.getBoolean("hasImage");
+            }
+        }catch(JSONException ex){
+            ex.printStackTrace();
+        }
     }
     public String getName(){
-        return this.song.title;
+        return this.title;
     }
     public String getTransformedDuration(){
-        return transformDuration(this.song.duration);
+        return transformDuration(this.duration);
     }
     private String getExtension(){
-        String url = song.url;
+        String url = this.url;
         return url.substring(url.lastIndexOf("."),
                 url.lastIndexOf("?")>-1?url.lastIndexOf("?"):url.length());
     }
-    public VKApiAudio getAudio(){
-        return this.song;
-    }
     public String getFileNameToSave(){
-        return song.artist+"-"+song.title+this.getExtension();
+        return this.artist+"-"+this.title+this.getExtension();
     }
     public String getNameToFilter(){
-        return song.artist+" "+song.title+this.getExtension();
+        return this.artist+" "+this.title;
     }
 
     /**
@@ -63,22 +91,22 @@ public class Song{
     }
 
     public Integer getId(){
-        return this.song.id;
+        return this.id;
     }
     public String getArtist(){
-        return this.song.artist;
+        return this.artist;
     }
     public String getTitle(){
-        return this.song.title;
+        return this.title;
     }
     public String getURL(){
-        return this.song.url;
+        return this.url;
     }
     public Integer getLyricsId(){
-        return this.song.lyrics_id;
+        return this.lyrics_id;
     }
     public Integer getDuration(){
-        return this.song.duration;
+        return this.duration;
     }
     public boolean hasLyrics(){
         return getLyricsId()>0;
@@ -96,40 +124,68 @@ public class Song{
     }
 
     public static JSONObject collectionToJSON(Collection<Song> songs){
+        JSONObject finalJSON = new JSONObject();
+        try {
+            JSONArray json = new JSONArray();
+            for(Song song:songs){
+                json.put(song.toJSON());
+            }
+            finalJSON.put(LocalStorage.VK_SONG_LIST,(Object)json);
+        }catch (JSONException ex){
+            ex.printStackTrace();
+        }
+        return finalJSON;
+    }
+
+    public JSONObject toJSON(String... extraData){
         JSONObject json = new JSONObject();
         try {
-            /*json.put("id", this.getId());
+            json.put("id", this.getId());
             json.put("artist", this.getArtist());
             json.put("title", this.getTitle());
             json.put("url", this.getURL());
             json.put("duration", this.getDuration());
             json.put("lyrics_id", this.getLyricsId());
             if(extraData.length>0){
-                json.put("lyrics",extraData[0]);
-                json.put("image",extraData[1]);
-            }*/
-            json.put("listOfSongs",songs);
+                json.put("lyricsText",extraData[0]);
+                json.put("hasImage",extraData[1].length()>0);
+            }
         }catch (JSONException ex){
             ex.printStackTrace();
         }
         return json;
     }
 
-    //public static Collection<Song> jsonToCollection(JSONObject json){
-    public static String jsonToCollection(JSONObject json){
-        Collection<Song> songsList = new ArrayList<Song>();
-        String data = "";
+    public static ArrayList<Song> jsonToCollection(JSONObject json){
+        ArrayList<Song> songsList = new ArrayList<Song>();
         try{
-            JSONArray jArray = json.getJSONArray("listOfSongs");
-            for(int i=0;i>jArray.length();i++){
-                //data+="\n"+jArray.get(i).toString();
-                return jArray.get(i).toString();
+            JSONArray jArray = json.getJSONArray(LocalStorage.VK_SONG_LIST);
+            for(int i=0;i<jArray.length();i++){
+                songsList.add(new Song((JSONObject) jArray.get(i)));
             }
         }catch(JSONException ex){
             ex.printStackTrace();
         }
-        return data;
-        //return songsList;
+        return songsList;
     }
 
+    /**
+     * This is tet function
+     * @param json - appearance of song in json
+     * @return simply string with key : value parameters of song
+     */
+    private static String jsonSongToString(JSONObject json){
+
+        String songToString = "";
+        try {
+            Iterator params = json.keys();
+            while (params.hasNext()) {
+                String key = (String) params.next();
+                songToString += key + ":" + json.get(key).toString() + "\n";
+            }
+        }catch(JSONException ex){
+            ex.printStackTrace();
+        }
+        return songToString;
+    }
 }

@@ -4,12 +4,14 @@ import android.animation.ValueAnimator;
 import android.app.ActivityOptions;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.*;
 import com.example.modyapp.app.Models.LocalStorage;
 import com.example.modyapp.app.Player.MusicPlayer;
@@ -31,6 +33,7 @@ import org.json.JSONObject;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Properties;
 
 public class ListActivity extends ActionBarActivity {
@@ -41,6 +44,7 @@ public class ListActivity extends ActionBarActivity {
     private DownloadMusic downloadTask;
     private ProgressDialog mProgressDialog;
     private ArrayList<Song> listOfSongs;
+    private SearchView searchView;
     private SongChangeEvent songChange;
     /**
      * Search needed songs from list by entering key-words
@@ -59,6 +63,23 @@ public class ListActivity extends ActionBarActivity {
                 songsAdapter.notifyDataSetChanged();
             }
             return true;
+        }
+    };
+    /**
+     * On focus out keyboard should be hidden.
+     */
+    private SearchView.OnFocusChangeListener focusChangeSearchView = new View.OnFocusChangeListener() {
+        @Override
+        public void onFocusChange(View v, boolean hasFocus) {
+            if(!hasFocus){
+                hideKeyboard(v);
+            }
+        }
+        private void hideKeyboard(View v){
+            if(v!=null) {
+                InputMethodManager inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputManager.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+            }
         }
     };
 
@@ -188,17 +209,7 @@ public class ListActivity extends ActionBarActivity {
     private VKRequest.VKRequestListener populateList = new VKRequest.VKRequestListener() {
         @Override
         public void onComplete(VKResponse response) {
-            VkAudioArray songs = (VkAudioArray) response.parsedModel;
-            listOfSongs = new ArrayList<Song>();
-            for(VKApiAudio song: songs){
-                listOfSongs.add(new Song(song));
-            }
-            LocalStorage.setValue(LocalStorage.VK_SONG_LIST,Song.collectionToJSON(listOfSongs));
-            songsAdapter = new SongAdapter(getApplicationContext(), listOfSongs);
-            songListView.setAdapter(songsAdapter);
-            MusicPlayer.populateMusicPlayer(listOfSongs);
-            songChange = new SongChangeEvent(null);
-            songChange.setOnSongChangeListener(songChangeListener);
+            pushDataToList((VkAudioArray) response.parsedModel);
         }
 
         @Override
@@ -216,8 +227,9 @@ public class ListActivity extends ActionBarActivity {
         songListView.setOnScrollListener(isScrollToTopAvailable);
         scrollToTop = (Button) findViewById(R.id.scroll_to_top);
         scrollToTop.setOnClickListener(scrollUp);
-        ((SearchView) findViewById(R.id.searchMusic))
-                .setOnQueryTextListener(searchListener);
+        searchView = (SearchView) findViewById(R.id.searchMusic);
+        searchView.setOnQueryTextListener(searchListener);
+        searchView.setOnFocusChangeListener(focusChangeSearchView);
         populateMusicList();
         //InitializeProgress();
        /* getFilesListFromDirectory(Environment.
@@ -229,14 +241,7 @@ public class ListActivity extends ActionBarActivity {
      */
     private void populateMusicList(){
         if(LocalStorage.getValue(LocalStorage.VK_SONG_LIST).length()>0){
-            AlertDialog.Builder builder = new AlertDialog.Builder(ListActivity.this);
-            builder.setTitle("First song data");
-            try {
-                builder.setMessage(Song.jsonToCollection(new JSONObject(LocalStorage.getValue(LocalStorage.VK_SONG_LIST))));
-            }catch(JSONException ex){
-                ex.printStackTrace();
-            }
-            builder.show();
+           pushDataToList();
         }else {
             VKRequest request = VKApi.audio().get();
             request.executeWithListener(populateList);
@@ -273,6 +278,52 @@ public class ListActivity extends ActionBarActivity {
                     }
             }
         }
+    }
+
+    /**
+     * Parameter of this function depends on that in which way
+     * it had been called. If it's not the first entrance of
+     * user then application will get data from it's local storage
+     * otherwise trying to load list from API.
+     * @param songs - list of user's songs.
+     */
+    private void pushDataToList(VkAudioArray songs){
+        listOfSongs = new ArrayList<Song>();
+        for(VKApiAudio song: songs){
+            listOfSongs.add(new Song(song));
+        }
+        setSongListInLocalStorage();
+        setAdapterAndPopulatePlayer();
+        setSongChangeListener();
+    }
+    private void pushDataToList(){
+        try {
+            listOfSongs = Song.jsonToCollection(
+                    new JSONObject(LocalStorage.getValue(LocalStorage.VK_SONG_LIST)));
+        }catch(JSONException ex){
+            ex.printStackTrace();
+        }
+        Toast.makeText(this,"Size of array = "+listOfSongs.size(),Toast.LENGTH_LONG).show();
+        setAdapterAndPopulatePlayer();
+        setSongChangeListener();
+    }
+
+    private void setAdapterAndPopulatePlayer(){
+        songsAdapter = new SongAdapter(getApplicationContext(), listOfSongs);
+        songListView.setAdapter(songsAdapter);
+        MusicPlayer.populateMusicPlayer(listOfSongs);
+    }
+
+    private void setSongChangeListener(){
+        songChange = new SongChangeEvent(null);
+        songChange.setOnSongChangeListener(songChangeListener);
+    }
+
+    /**
+     * Set or update data in localstorage about list of songs.
+     */
+    private void setSongListInLocalStorage(){
+        LocalStorage.setValue(LocalStorage.VK_SONG_LIST,Song.collectionToJSON(listOfSongs));
     }
 
     private void InitializeProgress() {

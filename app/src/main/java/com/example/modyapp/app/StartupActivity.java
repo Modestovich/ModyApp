@@ -75,6 +75,7 @@ public class StartupActivity extends Activity {
         dbHelper = new DatabaseHelper(this);
         VK_APP_ID = dbHelper.GetApplicationId();
         new LocalStorage(this);//initialize sharedPreference
+        //LocalStorage.clear();
         authVK();
     }
 
